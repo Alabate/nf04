@@ -6,6 +6,10 @@
 .errorMark{
 	width:.8em;
 }
+.actualLineMark{
+	width:.8em;
+	margin-left:-3px;
+}
 
 .errorBg{
 	background-color:#751a19;
@@ -64,7 +68,7 @@ top: auto;
 }
 
 .actualLine{
-	background-color:green;
+	background-color:#133f5e;
 }
 
 .navbar{
