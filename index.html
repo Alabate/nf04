@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="Robots" content="index, follow"/>
+
+    <title>NF04 Web</title>
+
+	<!-- Boostrap css -->
+		<link href="design/css/bootstrap.min.css" rel="stylesheet"/>
+		<link href="design/css/bootstrap-theme.min.css" rel="stylesheet"/>
+		<link href="design/css/glyphicons.css" rel="stylesheet"/>
+		<link href="codemirror/lib/codemirror.css" rel="stylesheet"/>
+		<link href="codemirror/theme/pastel-on-dark.css" rel="stylesheet"/>
+		<link href="design/css/ui-lightness/jquery-ui-1.10.4.custom.css" rel="stylesheet">
+		<link href="design/css/default.css" rel="stylesheet"/>
+	</head>
+	<body>
+		<div class="navbar navbar-inverse" role="navigation">
+			<div class="container">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="#">NF04 Web</a>
+				</div>
+			</div>
+		</div>
+      	<div class="container">
+	<div class="btn-group algo-control">
+				<button type="button" class="btn btn-default btn-start">
+					<span class="glyphicon glyphicon-play"></span>
+					Lancer</button>
+				<button type="button" class="btn btn-default btn-next">
+					<span class="glyphicon glyphicon-step-forward"></span>
+					Instruction suivante</button>
+				<button type="button" class="btn btn-default">
+					<span class=" glyphicon glyphicon-stop"></span>
+					Arreter l'execution</button>
+			</div>
+			<br/>
+
+
+      		<textarea id="code" disabled="disabled">Algorithme 10_Exemple_LireEcrire
+Types:
+Variables:
+    note, moyenne : réel
+Instructions:
+	Écrire ("Entrez la valeur de la note 1 (réel entre 0 et 20)" !)
+	Lire (clavier ! note)	
+	moyenne <- note
+	Écrire ("Entrez la valeur de la note 2 (réel entre 0 et 20)" !)
+	Lire (clavier ! note)
+	moyenne <- moyenne + note
+	Écrire ("Entrez la valeur de la note 3 (réel entre 0 et 20)" !)
+	Lire (clavier ! note)
+	moyenne <- moyenne + note
+	moyenne <- moyenne / 3
+	Écrire ("la moyenne est de ", moyenne !)</textarea>
+	<div class="btn-group algo-control">
+				<button type="button" class="btn btn-default btn-start">
+					<span class="glyphicon glyphicon-play"></span>
+					Lancer</button>
+				<button type="button" class="btn btn-default btn-next">
+					<span class="glyphicon glyphicon-step-forward"></span>
+					Instruction suivante</button>
+				<button type="button" class="btn btn-default">
+					<span class=" glyphicon glyphicon-stop"></span>
+					Arreter l'execution</button>
+			</div>
+
+<h2>Sortie</h2>
+<ul class="list-group" id="sortie">
+</ul>
+
+<h2>Trace</h2>
+<div class="panel panel-default" style="overflow:auto;width:100%;">
+	<table id="trace" class="table table-striped">   
+		<thead>  
+			<tr>  
+				<th>&nbsp;</th>
+			</tr>  
+		</thead> 
+		<tbody>  
+		</tbody>  
+	</table>  
+</div>
+
+			<hr>
+			<footer>
+				<p title="bob">&copy; Company 2014</p>
+			</footer>
+		</div> <!-- /container -->
+
+
+	    <!-- JavaScript -->
+		<script src="design/js/jquery-1.10.2.js"></script>
+		<script src="design/js/jquery-ui-1.10.4.custom.min.js"></script>
+	    <script src="codemirror/lib/codemirror.js"></script>
+		<script src="codemirror/mode/javascript/javascript.js"></script>
+	    <script type="text/javascript" src="nf04.js"></script>
+	</body>
+</html>
