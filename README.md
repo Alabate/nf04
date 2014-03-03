@@ -5,7 +5,7 @@ This is a personal project of a javascript interpreter for the *NF04 Programming
 
 This project use
 ====
-* [JQuery](https://jquery.org) under [MIT License](https://jquery.org/license/)
+* [jQuery](https://jquery.org) under [MIT License](https://jquery.org/license/)
 * [Bootstrap](http://getbootstrap.com) under [MIT License](https://github.com/twbs/bootstrap/blob/master/LICENSE) (front-end framework)
 * [CodeMirror](http://codemirror.net/) under [MIT License](http://codemirror.net/LICENSE) (text editor)
 * [Glyphicons](http://glyphicons.com/) under [MIT License (same as Bootstrap)](http://glyphicons.com/license/) (icons)
