@@ -725,8 +725,16 @@ $(function() {
 							if(/^([^:]+):\s*([^: ]+)\s*;?$/i.test(instruction))
 							{
 								var vars = RegExp.$1;
-								var type = RegExp.$2.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-								//TODO : check if type is known
+								var type = RegExp.$2.replace(/^\s\s*/, '').replace(/\s\s*$/, '').toLowerCase();
+								if(type == 'réels' || type == 'réel' || type == 'reels' || type == 'reel') type = 'réel';
+								else if(type == 'entier' || type == 'entiers') type = 'entier';
+								else if(type == 'caractères' || type == 'caractère' || type == 'caracteres' || type == 'caractere') type = 'caractère';
+								else if(type == 'booléens' || type == 'booléen' || type == 'booleens' || type == 'booleen') type = 'booléen';
+								else
+								{
+									addError(this.line, 'La type <strong>' + type + '</strong> n\'existe pas');
+									return;
+								}
 								//Split vars
 								vars = vars.split(',');
 								for (var j = 0; j < vars.length; j++) 
@@ -745,7 +753,6 @@ $(function() {
 											}
 											else{
 												addError(this.line, 'La variable <strong>' + vars[j] + '</strong> a déjà été définie');
-												this.line = -1;
 												return;
 											}
 										//add to the trace table
