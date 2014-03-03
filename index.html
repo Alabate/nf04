@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="Robots" content="index, follow"/>
 
-    <title>NF04 Web</title>
+    <title>Interpréteur NF04</title>
 
 	<!-- Boostrap css -->
 		<link href="design/css/bootstrap.min.css" rel="stylesheet"/>
@@ -21,25 +21,13 @@
 		<div class="navbar navbar-inverse" role="navigation">
 			<div class="container">
 				<div class="navbar-header">
-					<a class="navbar-brand" href="#">NF04 Web</a>
+					<a class="navbar-brand" href="http://alabate.github.io/nf04/">Interpréteur NF04</a>
 				</div>
 			</div>
 		</div>
       	<div class="container">
-	<div class="btn-group algo-control">
-				<button type="button" class="btn btn-default btn-start">
-					<span class="glyphicon glyphicon-play"></span>
-					Lancer</button>
-				<button type="button" class="btn btn-default btn-next">
-					<span class="glyphicon glyphicon-step-forward"></span>
-					Instruction suivante</button>
-				<button type="button" class="btn btn-default">
-					<span class=" glyphicon glyphicon-stop"></span>
-					Arreter l'execution</button>
-			</div>
-			<br/>
 
-
+			<h2>Algorithme</h2>
       		<textarea id="code" disabled="disabled">Algorithme 10_Exemple_LireEcrire
 Types:
 Variables:
@@ -56,38 +44,39 @@ Instructions:
 	moyenne <- moyenne + note
 	moyenne <- moyenne / 3
 	Écrire ("la moyenne est de ", moyenne !)</textarea>
-	<div class="btn-group algo-control">
-				<button type="button" class="btn btn-default btn-start">
-					<span class="glyphicon glyphicon-play"></span>
-					Lancer</button>
-				<button type="button" class="btn btn-default btn-next">
-					<span class="glyphicon glyphicon-step-forward"></span>
-					Instruction suivante</button>
-				<button type="button" class="btn btn-default">
-					<span class=" glyphicon glyphicon-stop"></span>
-					Arreter l'execution</button>
+			<div class="row">
+				<div class="btn-group algo-control col-sm-12 col-xs-12">
+					<button type="button" class="btn btn-default btn-start col-sm-4 col-xs-6">
+						<span class="glyphicon glyphicon-play"></span>
+						Lancer</button>
+					<button type="button" class="btn btn-default btn-next col-sm-4 col-xs-6">
+						<span class="glyphicon glyphicon-step-forward"></span>
+						Instruction suivante</button>
+					<button type="button" class="btn btn-default btn-stop col-sm-4 col-xs-12" disabled="disabled">
+						<span class=" glyphicon glyphicon-stop"></span>
+						Arreter l'execution</button>
+				</div>
 			</div>
 
-<h2>Sortie</h2>
-<ul class="list-group" id="sortie">
-</ul>
+			<h2>Sortie</h2>
+			<ul class="list-group" id="sortie"></ul>
 
-<h2>Trace</h2>
-<div class="panel panel-default" style="overflow:auto;width:100%;">
-	<table id="trace" class="table table-striped">   
-		<thead>  
-			<tr>  
-				<th>&nbsp;</th>
-			</tr>  
-		</thead> 
-		<tbody>  
-		</tbody>  
-	</table>  
-</div>
+			<h2>Trace</h2>
+			<div class="panel panel-default" style="overflow:auto;width:100%;">
+				<table id="trace" class="table table-striped">   
+					<thead>  
+						<tr>  
+							<th>&nbsp;</th>
+						</tr>  
+					</thead> 
+					<tbody>  
+					</tbody>  
+				</table>  
+			</div>
 
 			<hr>
 			<footer>
-				<p title="bob">&copy; Company 2014</p>
+				<p></p>
 			</footer>
 		</div> <!-- /container -->
 

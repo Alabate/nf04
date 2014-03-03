@@ -15,22 +15,37 @@ $(function() {
 				$('.btn-start').addClass('btn-pause')
 				$('.btn-start').html('<span class="glyphicon glyphicon-pause"></span> Mettre en pause')
 				$('.btn-start').removeClass('btn-start')
+				$('.btn-stop').removeAttr('disabled')
+				$('.btn-next').attr('disabled','disabled')
 				nf04.start();
 		});
-		$('.btn-next').click(function(){
+
+		$('.algo-control').on('click','.btn-next', function(){
 			nf04.next();
 		});
+
+		$('.algo-control').on('click','.btn-stop', function(){
+			$('.btn-pause').addClass('btn-start')
+			$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer')
+			$('.btn-pause').removeClass('btn-pause')
+			$('.btn-stop').attr('disabled','disabled')
+			$('.btn-next').removeAttr('disabled')
+			nf04.reset();
+		});
+
+
 		$('#sortie').on('click','.btn-restart', function(){
-			console.log('test')
 			nf04.restart();
 		});
-		//TODO restart on enter pressed
+
 		$('#sortie').on('keypress','.input-restart', function(event){
 			if(event.which == 13)
 			{
 				nf04.restart();
 			}
 		});
+
+		
 		editor.on("change", function(){
 			$('.ui-tooltip').hide();
 	  	});
