@@ -1,4 +1,3 @@
-
 $(function () {
 	//'use strict';
 	//This declares to JSHint that $ and codemirror are global variable, and the false indicates that it should not be overridden.
