@@ -1,5 +1,8 @@
 
-$(function() {
+$(function () {
+	//'use strict';
+	//This declares to JSHint that $ and codemirror are global variable, and the false indicates that it should not be overridden.
+		/* global $:false, CodeMirror:false */
 	//Init codemirror
 		var nf04 = new NF04();
 	//events
@@ -31,50 +34,52 @@ $(function() {
 		});
 
 
-		nf04.editor.on("change", function(){
+		nf04.editor.on('change', function()
+		{
 			$('.ui-tooltip').hide();
-	  	});
-	//Execute algo
+		});
 
-	function NF04() 
-	{ 
+
+	function NF04()
+	{
 		this.init = function()
 		{
 			//(re)init buttons
-			$('.btn-pause').addClass('btn-start')
-			$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer')
-			$('.btn-pause').removeClass('btn-pause')
-			$('.btn-stop').attr('disabled','disabled')
-			$('.btn-next').removeAttr('disabled')
-			$('.btn-start').removeAttr('disabled')
+			$('.btn-pause').addClass('btn-start');
+			$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer');
+			$('.btn-pause').removeClass('btn-pause');
+			$('.btn-stop').attr('disabled','disabled');
+			$('.btn-next').removeAttr('disabled');
+			$('.btn-start').removeAttr('disabled');
 			//init vars
 			this.mode = 0;
-			this.varsTypes = Array();
-			this.varsNames = Array();
-			this.varsValues = Array();
-			this.varsLastValues = Array();
-			this.line = 0; 
-			this.traceCount = 0; 
+			this.varsTypes = [];
+			this.varsNames = [];
+			this.varsValues = [];
+			this.varsLastValues = [];
+			this.line = 0;
+			this.traceCount = 0;
 			this.traceScreenLine = -1;
-			this.tooltipMsgs = []
+			this.tooltipMsgs = [];
 			this.inputSubmited = false;
 			this.inputCreated = false;
 			this.inputValue = '';
 			this.loopMode = false;
+			this.controlFlow = [];
 			//set trace and output
 			$('#sortie').html('');
 			$('#trace').html('<thead><tr><th>&nbsp;</th></tr></thead><tbody></tbody>');
 			//Setup editor
 			this.editor = CodeMirror.fromTextArea(document.getElementById('code'),
 			{
-			    lineNumbers: true,
-			    styleActiveLine: true,
-			    matchBrackets: true,
-			    theme: "pastel-on-dark",
-  				gutters: ["CodeMirror-linenumbers", "errorMark", "actualLineMark"],
-			})
+				lineNumbers: true,
+				styleActiveLine: true,
+				matchBrackets: true,
+				theme: 'pastel-on-dark',
+				gutters: ['CodeMirror-linenumbers', 'errorMark', 'actualLineMark'],
+			});
 
-		}
+		};
 		// and init !
 		this.init();
 
@@ -82,178 +87,181 @@ $(function() {
 
 
 		//Update all tooltips
-		this.updateTooltips = function () 
+		this.updateTooltips = function()
 		{
-			var editor= this.editor;
+			var editor = this.editor;
 			$.each(this.tooltipMsgs,function(index, value){
-				editor.addLineClass(index, "wrap", "tooltip-msg tooltip-msg-" + index) 
-				$( ".tooltip-msg" ).tooltip({
+				editor.addLineClass(index, 'wrap', 'tooltip-msg tooltip-msg-' + index);
+				$( '.tooltip-msg' ).tooltip({
 					position: {
-						my: "left bottom-10",
-						at: "left top",
+						my: 'left bottom-10',
+						at: 'left top',
 						using: function( position, feedback ) {
 							$( this ).css( position );
-							$( "<div>" )
-							.addClass( "arrow" )
+							$( '<div>' )
+							.addClass( 'arrow' )
 							.addClass( feedback.vertical )
 							.addClass( feedback.horizontal )
 							.appendTo( this );
 						}
 					},
-				 	hide: {
-						effect: "hide",
+					hide: {
+						effect: 'hide',
 						delay: 0
 					},
 					show: {
-						effect: "show",
+						effect: 'show',
 						delay: 0
 					},
 				});
-				$( ".tooltip-msg-" + index ).attr("title","")
-				$( ".tooltip-msg-" + index ).tooltip( "option", "content", value);
+				$( '.tooltip-msg-' + index ).attr('title','');
+				$( '.tooltip-msg-' + index ).tooltip( 'option', 'content', value);
 			});
-		}
+		};
 		//add error mark on editor
-		this.addError = function (line, message, isWarning = false) 
+		this.addError = function(line, message, isWarning)
 		{
-
+			isWarning = (typeof isWarning !== 'undefined' )? isWarning : false;
 			//add colored disc next to the line number
-				var marker = document.createElement("div");
-				marker.innerHTML = "●";
+				var marker = document.createElement('div');
+				marker.innerHTML = '●';
 				if(isWarning){
-					marker.style.color = "orange";
-					this.editor.addLineClass(line, "background", "warningBg")
+					marker.style.color = 'orange';
+					this.editor.addLineClass(line, 'background', 'warningBg');
 					$('#sortie').append('<li class="list-group-item list-group-item-warning"><u>Ligne ' + (line+1) + '</u> : ' + message + '</li>');
 
 				}
 				else{
-					marker.style.color = "red";
-					this.editor.addLineClass(line, "background", "errorBg")
+					this.editor.removeLineClass(line, 'background', 'warningBg');
+					marker.style.color = 'red';
+					this.editor.addLineClass(line, 'background', 'errorBg');
 					$('#sortie').append('<li class="list-group-item list-group-item-danger"><u>Ligne ' + (line+1) + '</u> : ' + message + '</li>');
 					//stop ui except reset button
-					this.editor.removeLineClass(line, "background", "actualLine") ;
+					this.editor.removeLineClass(line, 'background', 'actualLine');
 					this.line = -1;
-					$('.btn-start').attr('disabled','disabled')
-					$('.btn-pause').attr('disabled','disabled')
-					$('.btn-next').attr('disabled','disabled')
-					$('.btn-submit').attr('disabled','disabled')
-					$('.btn-stop').removeAttr('disabled')
-					this.disableEditor(false)
+					$('.btn-start').attr('disabled','disabled');
+					$('.btn-pause').attr('disabled','disabled');
+					$('.btn-next').attr('disabled','disabled');
+					$('.btn-submit').attr('disabled','disabled');
+					$('.btn-stop').removeAttr('disabled');
+					this.disableEditor(false);
 				}
-				this.editor.setGutterMarker(line, "errorMark", marker);
+				this.editor.setGutterMarker(line, 'errorMark', marker);
 			//Set tooltip
 				this.tooltipMsgs[line] = message;
 				this.updateTooltips();
-		}
+		};
 
-		this.setActualLine = function (line) 
+		this.setActualLine = function(line)
 		{
 			//Remove old actual line
-				for (var j = 0; j < this.editor.lineCount() ; j++) 
+				for (var j = 0; j < this.editor.lineCount() ; j++)
 				{
-					this.editor.removeLineClass(j, "background", "actualLine") ;
+					this.editor.removeLineClass(j, 'background', 'actualLine');
 				}
-					this.editor.clearGutter("actualLineMark")
+				this.editor.clearGutter('actualLineMark');
 			//set Actual line style
 				if(line != -1)
 				{
-					this.editor.addLineClass(line, "background", "actualLine") ;
+					this.editor.addLineClass(line, 'background', 'actualLine');
 
-					var marker = document.createElement("div");
-					marker.innerHTML = ">";
-					marker.style.color = "#6faedf";
-					this.editor.setGutterMarker(line, "actualLineMark", marker);
+					var marker = document.createElement('div');
+					marker.innerHTML = '>';
+					marker.style.color = '#6faedf';
+					this.editor.setGutterMarker(line, 'actualLineMark', marker);
 					//scroll
 					var elementHeight = Math.round($('.CodeMirror-vscrollbar').children('div').height() / this.editor.lineCount());
 					//If the element is below the view
 					if($('.CodeMirror-vscrollbar').scrollTop() < (elementHeight*(line+1) - $('.CodeMirror').height() + 5))
-						$('.CodeMirror-vscrollbar').scrollTop(elementHeight*(line+1) - $('.CodeMirror').height() + 5)
+						$('.CodeMirror-vscrollbar').scrollTop(elementHeight*(line+1) - $('.CodeMirror').height() + 5);
 					//else if the element is above
 					else if($('.CodeMirror-vscrollbar').scrollTop() > elementHeight*line )
-						$('.CodeMirror-vscrollbar').scrollTop(elementHeight*line)
+						$('.CodeMirror-vscrollbar').scrollTop(elementHeight*line);
 				}
 			this.updateTooltips();
-		}
+		};
 
 
-		this.executeExpression = function (expressionString, quotes = true) 
+		this.executeExpression = function(expressionString, quotes)
 		{
+			quotes = (typeof quotes !== 'undefined' )? quotes : true;
 			//To array
 			var oldExpressionString = expressionString;
-			var out = Array();
+			var out = [];
 			var buffer = '';
 			var parenthesesLevel = 0;
 			var stringMode = false;
-			for (var i = 0; i < expressionString.length; i++) 
+			for (var i = 0; i < expressionString.length; i++)
 			{
 				//whitespaces
 				if(!stringMode && /^\s$/.test(expressionString[i]))
 				{
-					if(buffer != '')
+					if(buffer !== '')
 					{
-						out[out.length] = new Object();
+						out[out.length] = {};
 						out[out.length-1].value = buffer;
 						buffer = '';
-					}	
+					}
 				}
-				else if(!stringMode && "+-*/%=!<>".indexOf(expressionString[i]) != -1) // Operators chars that will break any var name or function or anything except stringmode
+				// Operators chars that will break any var name or function or anything except stringmode
+				else if(!stringMode && '+-*/%=!<>'.indexOf(expressionString[i]) != -1)
 				{
 					//Save buffer
-						if(buffer != '')
+						if(buffer !== '')
 						{
-							out[out.length] = new Object();
+							out[out.length] = {};
 							out[out.length-1].value = buffer;
 							buffer = '';
 						}
-					//check the char after this one to know if it"s a two-char operator
-						if(expressionString[i+1] != undefined && $.inArray((expressionString[i]+expressionString[i+1]), Array('!=','<=','>=')) != -1)
+					//check the char after this one to know if it's a two-char operator
+						if(expressionString[i+1] !== undefined && $.inArray((expressionString[i]+expressionString[i+1]), ['!=','<=','>=']) != -1)
 						{
-							out[out.length] = new Object();
+							out[out.length] = {};
 							out[out.length-1].value = (expressionString[i] + expressionString[i+1]);
 							i++;
 						}
 						else
 						{
-							out[out.length] = new Object();
+							out[out.length] = {};
 							out[out.length-1].value = expressionString[i];
 						}
 				}
 				else if(!stringMode && expressionString[i] == '(')
 				{
-					if(buffer != '')
+					if(buffer !== '')
 					{
-						if(buffer.toLowerCase == 'ou' || buffer.toLowerCase == 'et')
+						if(buffer.toLowerCase() == 'ou' || buffer.toLowerCase() == 'et')
 						{
-							out[out.length] = new Object();
+							out[out.length] = {};
 							out[out.length-1].value = buffer;
-							out[out.length] = new Object();
+							out[out.length] = {};
 							out[out.length-1].value = '(';
 						}
 						else
 						{
-							out[out.length] = new Object();
+							out[out.length] = {};
 							out[out.length-1].value = buffer + '(';
 						}
 						buffer = '';
-					}	
+					}
 					else
 					{
-						out[out.length] = new Object();
+						out[out.length] = {};
 						out[out.length-1].value = '(';
 					}
 					parenthesesLevel++;
 				}
 				else if(!stringMode && expressionString[i] == ')')
 				{
-					if(buffer != '')
+					if(buffer !== '')
 					{
-						out[out.length] = new Object();
+						out[out.length] = {};
 						out[out.length-1].value = buffer;
 						buffer = '';
-					}	
+					}
 					parenthesesLevel--;
-					out[out.length] = new Object();
-					out[out.length-1].value = ')'
+					out[out.length] = {};
+					out[out.length-1].value = ')';
 					//TODO exit and error if < 0
 				}
 				else if(expressionString[i] == '\'' || expressionString[i] == '"')
@@ -261,9 +269,9 @@ $(function() {
 					if(!stringMode)
 					{
 						//save buffer
-						if(buffer != '')
+						if(buffer !== '')
 						{
-							out[out.length] = new Object();
+							out[out.length] = {};
 							out[out.length-1].value = buffer;
 						}
 						//enter in string mode
@@ -276,7 +284,7 @@ $(function() {
 						if(expressionString[i] == stringMode && i >= 1 && expressionString[i-1] != '\\')
 						{
 							//Quit string mode
-							out[out.length] = new Object();
+							out[out.length] = {};
 							out[out.length-1].value = buffer + expressionString[i];
 							buffer = '';
 							stringMode = false;
@@ -289,136 +297,137 @@ $(function() {
 				}
 
 
-			};
+			}
+
 			//Save final buffer
-			if(buffer != '')
+			if(buffer !== '')
 			{
-				out[out.length] = new Object();
+				out[out.length] = {};
 				out[out.length-1].value = buffer;
 				buffer = '';
-			}	
+			}
 
 			//look at value and check if all cell are known types and replace vars
-				for (i = 0; i < out.length; i++) 
+				for (i = 0; i < out.length; i++)
 				{
 					var temp;
-					if(temp = this.getType(out[i].value, quotes))
+					if((temp = this.getType(out[i].value, quotes)))
 					{
 						out[i] = temp;
 					}
 					else
 					{
-						this.addError(this.line, "Expression source du problème : <strong>" + oldExpressionString + "</strong>. <br/> Transformé en <strong>" + this.expressionString(out) + "</strong>.");
+						this.addError(this.line, 'Expression source du problème : <strong>' + oldExpressionString + '</strong>. <br/> Transformé en <strong>' + this.expressionString(out) + '</strong>.');
 						return false;
 					}
 				}
 			//If there is there is - or + without value at left, just add zero
-				for (i = 0; i < out.length; i++) 
+				for (i = 0; i < out.length; i++)
 				{
-					if((out[i].value == '-' || out[i].value == '+') && (out[i-1] == undefined || out[i-1].categorie != 'value'))
+					if((out[i].value == '-' || out[i].value == '+') && (out[i-1] === undefined || (out[i-1].categorie != 'value' && out[i-1].categorie != ')')))
 					{
-						out.insert(i,Object)
+						out.insert(i,{});
 						out[i].value = 0;
 						out[i].type = 'réel';
 						out[i].categorie = 'value';
 					}
 				}
-
 			//Calculate
 			var result = this.evaluateExpression(out);
 			if(!result)
 			{
-				this.addError(this.line, "Expression source du problème : <strong>" + oldExpressionString + "</strong>. <br/> Transformé en <strong>" + this.expressionString(out) + "</strong>.");
+				this.addError(this.line, 'Expression source du problème : <strong>' + oldExpressionString + '</strong>. <br/> Transformé en <strong>' + this.expressionString(out) + '</strong>.');
 			}
 			return result;
-		}
+		};
 
-		this.getType = function(value) 
+		this.getType = function(value)
 		{
-			var out = new Object();
+			var out = {};
+			var matches;
 			out.value = value;
 			if(value == '(' || value == ')')
 			{
 				out.categorie = value;
 				out.type = value;
 			}
-			else if(matches = value.match(/^([a-z0-9_]+)\($/i)) //Function
+			else if((matches = value.match(/^([a-z0-9_]+)\($/i)) !== null) //Function
 			{
 				out.categorie = 'function';
 				out.type = 'function';
 				out.value = matches[1].toLowerCase();
 				if(matches[1].toLowerCase() != 'e' && matches[1].toLowerCase() != 'non')
 				{
-					this.addError(this.line, "La fonction ou le sous-algorithme <strong>" + matches[1] + "</strong> n'existe pas.");
+					this.addError(this.line, 'La fonction ou le sous-algorithme <strong>' + matches[1] + '</strong> n\'existe pas.');
 					return false;
 				}
 			}
-			else if(value.match(/^([0-9]+)$/i) != null) //Entier
+			else if(value.match(/^([0-9]+)$/i) !== null) //Entier
 			{
 				out.value = parseInt(value);
 				out.categorie = 'value';
 				out.type = 'entier';
 			}
-			else if(value.match(/^([0-9,\.]+)$/i) != null) //Réel
+			else if(value.match(/^([0-9,\.]+)$/i) !== null) //Réel
 			{
 				out.value = parseFloat(value.replace(',','.'));
 				out.categorie = 'value';
 				out.type = 'réel';
 			}
-			else if(value.match(/^(\*|\/|%)$/i) != null) //Operator level first
+			else if(value.match(/^(\*|\/|%)$/i) !== null) //Operator level first
 			{
 				out.categorie = 'operator';
 				out.type = 1;
 			}
-			else if(value.match(/^(\+|-)$/i) != null) //Operator level second
+			else if(value.match(/^(\+|-)$/i) !== null) //Operator level second
 			{
 				out.categorie = 'operator';
 				out.type = 2;
 			}
-			else if(value.match(/^(=|!=|<=|>=|<|>)$/i) != null) //Operator third second
+			else if(value.match(/^(=|!=|<=|>=|<|>)$/i) !== null) //Operator third second
 			{
 				out.categorie = 'operator';
 				out.type = 3;
 			}
-			else if(value.match(/^(ET|OU)$/i) != null) //Operator level fourth
+			else if(value.match(/^(ET|OU)$/i) !== null) //Operator level fourth
 			{
 				out.categorie = 'operator';
 				out.type = 4;
 			}
-			else if((matches = value.match(/^"([^"]*)"$/i)) != null) //String : temp type, i will remove it after array implementation TODO
+			else if((matches = value.match(/^"([^"]*)"$/i)) !== null) //String : temp type, i will remove it after array implementation TODO
 			{
 				out.categorie = 'value';
 				out.type = 'string';
 				out.value = matches[1];
 			}
-			else if((matches = value.match(/^'(\\?[^']*)'$/i)) != null) //Caractère
+			else if((matches = value.match(/^'(\\?[^']*)'$/i)) !== null) //Caractère
 			{
 				if(matches[1].length >= 2)
-					this.addError(this.line, "La valeur <strong>" + value + "</strong> du type <strong>caractère</strong> contient plus d'un caractère. Elle sera donc tronquée.",true);
+					this.addError(this.line, 'La valeur <strong>' + value + '</strong> du type <strong>caractère</strong> contient plus d\'un caractère. Elle sera donc tronquée.',true);
 				out.value = matches[1][0];
 				out.categorie = 'value';
 				out.type = 'caractère';
 			}
-			else if(value.match(/^(Vrai|Faux)$/i) != null) //booléen
+			else if(value.match(/^(Vrai|Faux)$/i) !== null) //booléen
 			{
-				out.value = (value.toLowerCase == 'vrai');
+				out.value = (value.toLowerCase() == 'vrai');
 				out.categorie = 'value';
 				out.type = 'booléen';
 			}
-			else if((matches = value.match(/^([a-z0-9_]+)$/i)) != null) //Variable
+			else if((matches = value.match(/^([a-z0-9_]+)$/i)) !== null) //Variable
 			{
 				//Get type
-					if(this.varsTypes[matches[1]] == undefined)
+					if(this.varsTypes[matches[1]] === undefined)
 					{
-						this.addError(this.line, "La variable <strong>" + matches[1] + "</strong> n'est pas définie");
+						this.addError(this.line, 'La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
 						return false;
 					}
 					out.categorie = 'value';
 					out.type = this.varsTypes[matches[1]];
 				//Get value
-					if(this.varsValues[matches[1]] == undefined)
+					if(this.varsValues[matches[1]] === undefined)
 					{
-						this.addError(this.line, "La variable <strong>" + matches[1] + "</strong> n'a pas de valeur",true);
+						this.addError(this.line, 'La variable <strong>' + matches[1] + '</strong> n\'a pas de valeur',true);
 						//Set default value
 						if(this.varsTypes[matches[1]] == 'booléen')
 							out.value = 'Faux';
@@ -430,41 +439,63 @@ $(function() {
 			}
 			else
 			{
-				this.addError(this.line, "Je ne comprend pas la signification de cet enchainement de caractères : <strong>" + value + "</strong>.");
+				this.addError(this.line, 'Je ne comprend pas la signification de cet enchainement de caractères : <strong>' + value + '</strong>.');
 				return false;
 			}
 			return out;
-		}
+		};
 
-		this.evaluateExpression = function (expressionObject) 
+		this.evaluateExpression = function (expressionObject)
 		{
 			var input = expressionObject;
+			var i;
+			//console.log(this.expressionString(input));
 			//Remove () if they are useless
-			if(input[0].categorie == '(' && input[input.length-1].categorie == ')')
-			{
-				input.shift();
-				input.pop();
-			}
+				if(input[0].categorie == '(' && input[input.length-1].categorie == ')')
+				{
+					//Test if first and last parenthese are together
+						var deleteThem = true;
+						var level = 0;
+						for (i = 0; i < input.length; i++)
+						{
+							if(input[i].categorie == '(' || input[i].categorie == 'function')
+								level++;
+							if(input[i].categorie == ')')
+								level--;
+							if(level === 0 && i != input.length-1)
+							{
+								deleteThem = false;
+								break;
+							}
+						}
+						if(deleteThem)
+						{
+							input.shift();
+							input.pop();
+						}
+				}
 			//If only one value
-			if(input.length == 1 && input[0].categorie == 'value')
-				return input[0];
+				if(input.length == 1 && input[0].categorie == 'value')
+				{
+					return input[0];
+				}
 			//Find the operation with less priority
 				var lastType;
 				var lastTypeI;
 				var lowestOperatorLevel = 0;
 				var lowestOperatorI = -1;
 				var parentheseLevel = 0;
-				for (var i = input.length - 1; i >= 0; i--) 
+				for (i = input.length - 1; i >= 0; i--)
 				{
 					//Check operator/value alternation
 					if(input[i].categorie == 'value' && lastType == 'value')
 					{
-						this.addError(this.line, "J'essaye de calculer cette expression : <strong>" + this.expressionString(input) + "</strong> mais j'ai trouvé deux valeurs qui se suivent <strong>" + this.valueobjToString(input[i]) + "</strong> et <strong>" + this.valueobjToString(input[lastTypeI]) + "</strong> alors que toutes les valeurs doivent être séparés par un opérateur.");
+						this.addError(this.line, 'J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux valeurs qui se suivent <strong>' + this.valueobjToString(input[i]) + '</strong> et <strong>' + this.valueobjToString(input[lastTypeI]) + '</strong> alors que toutes les valeurs doivent être séparés par un opérateur.');
 						return false;
 					}
 					if(input[i].categorie == 'operator' && lastType == 'operator')
 					{
-						this.addError(this.line, "J'essaye de calculer cette expression : <strong>" + this.expressionString(input) + "</strong> mais j'ai trouvé deux opérateurs qui se suivent <strong>" + this.valueobjToString(input[i]) + "</strong> et <strong>" + this.valueobjToString(input[lastTypeI]) + "</strong> alors que tous les opérateur doivent être séparés par une valeur.");
+						this.addError(this.line, 'J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux opérateurs qui se suivent <strong>' + this.valueobjToString(input[i]) + '</strong> et <strong>' + this.valueobjToString(input[lastTypeI]) + '</strong> alors que tous les opérateur doivent être séparés par une valeur.');
 						return false;
 					}
 					if(input[i].categorie == 'value' || input[i].categorie == 'operator')
@@ -478,14 +509,20 @@ $(function() {
 					if(input[i].categorie == ')')
 						parentheseLevel--;
 					if(!parentheseLevel)
-					{						
+					{
 						if(input[i].categorie == 'operator' && input[i].type > lowestOperatorLevel)
 						{
 							lowestOperatorLevel = input[i].type;
 							lowestOperatorI = i;
 						}
 					}
-				};
+				}
+				//Check If there is a sign alone at the end -> error
+				if(input[input.length-1].categorie == 'operator')
+				{
+					this.addError(this.line, 'J\'ai trouvé un opérateur qui n\'avait pas de valeur à sa droite : <strong>' + input[input.length-1].value + '</strong>.');
+					return false;
+				}
 				//if founded one
 				if(!parentheseLevel && lowestOperatorI != -1)
 				{
@@ -493,26 +530,26 @@ $(function() {
 					return this.calculate(
 						this.evaluateExpression(input.slice(0,lowestOperatorI)),
 						input[lowestOperatorI].value,
-						this.evaluateExpression(input.slice(lowestOperatorI+1)))
+						this.evaluateExpression(input.slice(lowestOperatorI+1)));
 				}
 
-		}
+		};
 
-		this.calculate = function (valueObj1, operator, valueObj2) 
+		this.calculate = function (valueObj1, operator, valueObj2)
 		{
-			if(valueObj1 == false || valueObj2 == false)
+			if(valueObj1 === false || valueObj2 === false)
 				return false;
-			var out = new Object();
+			var out = {};
 			out.categorie = 'value';
 			//Check types
-				if($.inArray(operator, Array('+','-','*','/')) != -1)
+				if($.inArray(operator, ['+','-','*','/']) != -1)
 				{
-					if($.inArray(valueObj1.type, Array('réel','entier')) == -1 || $.inArray(valueObj2.type, Array('réel','entier'))  == -1)
+					if($.inArray(valueObj1.type, ['réel','entier']) == -1 || $.inArray(valueObj2.type, ['réel','entier'])  == -1)
 					{
-						this.addError(this.line, "L'opperation suivante a été faite : <br/><strong>" 
-								+ this.valueobjToString(valueObj1) + " " + operator + " " + this.valueobjToString(valueObj2) + "</strong> ayant pour types <strong>&lt;" 
-								+ valueObj1.type + "&gt; " + operator + " &lt;" + valueObj2.type + "&gt;</strong><br/>"
-								+ "Or cet opérateur ne supporte que les <strong>réels</strong> ou les <strong>entiers</strong>");
+						this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+								+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+								+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
+								+ 'Or cet opérateur ne supporte que les <strong>réels</strong> ou les <strong>entiers</strong>');
 						return false;
 					}
 					//Output type
@@ -525,37 +562,37 @@ $(function() {
 				{
 					if(valueObj1.type != 'entier' || valueObj2.type != 'entier')
 					{
-						this.addError(this.line, "L'opperation suivante a été faite : <br/><strong>" 
-								+ this.valueobjToString(valueObj1) + " " + operator + " " + this.valueobjToString(valueObj2) + "</strong> ayant pour types <strong>&lt;" 
-								+ valueObj1.type + "&gt; " + operator + " &lt;" + valueObj2.type + "&gt;</strong><br/>"
-								+ "Or cet opérateur ne supporte que les <strong>entiers</strong>");
+						this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+								+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+								+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
+								+ 'Or cet opérateur ne supporte que les <strong>entiers</strong>');
 						return false;
 					}
 					//Output type
 					out.type = 'entier';
 				}
-				else if($.inArray(operator, Array('=','!=','<=','>=','<','>')) != -1)
+				else if($.inArray(operator, ['=','!=','<=','>=','<','>']) != -1)
 				{
 					//If types are not same AND they are not both (réel or entier)
-					if(valueObj1.type != valueObj2.type && ($.inArray(valueObj1.type, Array('réel','entier')) == -1 || $.inArray(valueObj2.type, Array('réel','entier'))  == -1))
+					if(valueObj1.type != valueObj2.type && ($.inArray(valueObj1.type, ['réel','entier']) == -1 || $.inArray(valueObj2.type, ['réel','entier'])  == -1))
 					{
-						this.addError(this.line, "L'opperation suivante a été faite : <br/><strong>" 
-								+ this.valueobjToString(valueObj1) + " " + operator + " " + this.valueobjToString(valueObj2) + "</strong> ayant pour types <strong>&lt;" 
-								+ valueObj1.type + "&gt; " + operator + " &lt;" + valueObj2.type + "&gt;</strong><br/>"
-								+ "Or cet opérateur ne comparer que des éléments du même type (exception faite pour les réels et les entiers qui peuvent être comparés)");
+						this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+								+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+								+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
+								+ 'Or cet opérateur ne comparer que des éléments du même type (exception faite pour les réels et les entiers qui peuvent être comparés)');
 						return false;
 					}
 					//Output type
 					out.type = 'booléen';
 				}
-				else if($.inArray(operator, Array('ET','OU')) != -1)
+				else if($.inArray(operator, ['ET','OU']) != -1)
 				{
-					if($.inArray(valueObj1.type, Array('booléen')) == -1 || $.inArray(valueObj2.type, Array('booléen'))  == -1)
+					if($.inArray(valueObj1.type, ['booléen']) == -1 || $.inArray(valueObj2.type, ['booléen'])  == -1)
 					{
-						this.addError(this.line, "L'opperation suivante a été faite : <br/><strong>" 
-								+ this.valueobjToString(valueObj1) + " " + operator + " " + this.valueobjToString(valueObj2) + "</strong> ayant pour types <strong>&lt;" 
-								+ valueObj1.type + "&gt; " + operator + " &lt;" + valueObj2.type + "&gt;</strong><br/>"
-								+ "Or cet opérateur ne supporte que les <strong>booléen</strong>");
+						this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+								+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+								+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
+								+ 'Or cet opérateur ne supporte que les <strong>booléen</strong>');
 						return false;
 					}
 					//Output type
@@ -563,14 +600,13 @@ $(function() {
 				}
 				else
 				{
-					this.addError(this.line, "L'opperation suivante a été faite : <br/><strong>" 
-							+ this.valueobjToString(valueObj1) + " " + operator + " " + this.valueobjToString(valueObj2) + "</strong> ayant pour types <strong>&lt;" 
-							+ valueObj1.type + "&gt; " + operator + " &lt;" + valueObj2.type + "&gt;</strong><br/>"
-							+ "Or cet opérateur n'existe pas.");
+					this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
+							+ 'Or cet opérateur n\'existe pas.');
 					return false;
 				}
 					//calculate
-						var result;
 						switch(operator)
 						{
 							case '+':
@@ -613,46 +649,53 @@ $(function() {
 								out.value = valueObj1.value || valueObj2.value;
 								break;
 							default:
-								this.addError(this.line, "L'opperation suivante a été faite : <br/><strong>" 
-									+ this.valueobjToString(valueObj1) + " " + operator + " " + this.valueobjToString(valueObj2) + "</strong> ayant pour types <strong>&lt;" 
-										+ valueObj1.type + "&gt; " + operator + " &lt;" + valueObj2.type + "&gt;</strong><br/>"
-										+ "Or cet opérateur n'existe pas.");
+								this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+										+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+										+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
+										+ 'Or cet opérateur n\'existe pas.');
 								return false;
-								break;
 						}
 			return out;
-		}
+		};
 
-		this.expressionString = function (expressionObject) 
+		this.expressionString = function (expressionObject)
 		{
 			var output = '';
 			for (var i = 0; i < expressionObject.length; i++) {
 					output += this.valueobjToString(expressionObject[i]) + ' ';
-			};
+			}
 			return output;
-		}
+		};
 
-		this.valueobjToString = function (valueObj, quotes = true) 
+		this.valueobjToString = function (valueObj, quotes)
 		{
-			if(valueObj.type == 'caractère')
+			quotes = (typeof quotes !== 'undefined' )? quotes : true;
+			if(valueObj.categorie == 'value')
 			{
-				if(quotes)
-					return '\'' + valueObj.value + '\'';
+				if(valueObj.type == 'caractère')
+				{
+					if(quotes)
+						return '\'' + valueObj.value + '\'';
+					else
+						return valueObj.value;
+				}
+				if(valueObj.type == 'string')
+				{
+					if(quotes)
+						return '"' + valueObj.value + '"';
+					else
+						return valueObj.value;
+				}
+				if(valueObj.type == 'booléen')
+					return (valueObj.value)? 'Vrai' : 'Faux';
 				else
 					return valueObj.value;
 			}
-			if(valueObj.type == 'string')
-			{
-				if(quotes)
-					return '"' + valueObj.value + '"';
-				else
-					return valueObj.value;
-			}
-			if(valueObj.type == 'booléen')
-				return (valueObj.value)? 'Vrai' : 'Faux';
+			else if(valueObj.categorie == 'function')
+				return (valueObj.value + '(');
 			else
 				return valueObj.value;
-		}
+		};
 
 		//Execute the next instruction
 		this.nextLine = function()
@@ -660,33 +703,43 @@ $(function() {
 			this.disableEditor(true);
 			//Get the line value and remove white spaces from start and end of the string
 				var instruction = this.editor.getLine(this.line);
+				var that = this;
 				//if the algorithme reach the end
 				if(this.line == -1)
 					return;
-				if(instruction == undefined)
+				if(instruction === undefined)
 				{
 					$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : L\'algorithme s\'est terminé correctement</li>');
 					this.line = -1;
 					this.setActualLine(-1);
 					this.disableEditor(false);
 					this.loopMode = false;
-					return;
+					//Reach the end without find all end of control flow instructions
+					if(this.controlFlow.length > 0 && this.controlFlow[this.controlFlow.length-1] !== undefined)
+					{
+						//TODO changer le message d'erreur en fonction des différents contenus que this.controlFlow[this.controlFlow.length-1].type peut avoir
+
+						this.addError(this.controlFlow[this.controlFlow.length-1].line, 'je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Si .. Alors</strong>');
+						return false;
+					}
+					return false;
 				}
 				//ignore if the line is empty
 				instruction = instruction.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-				if(instruction != "" && instruction.substr(0,2) != "//")
+				if(instruction !== '' && instruction.substr(0,2) != '//')
 				{
+						var matches, type, i, found;
 					//Wait for "Algorithme <Nom>"
-						if(this.mode == 0)
+						if(this.mode === 0)
 						{
-							var matches = /^Algorithme\s+([^ "']+)$/i.exec(instruction);
-							if(matches != null){
+							matches = /^Algorithme\s+([^ "']+)$/i.exec(instruction);
+							if(matches !== null){
 								this.mode++;
-								$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;") + '</strong></li>');
+								$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;') + '</strong></li>');
 							}
 							else
 							{
-								this.addError(this.line, "L'algorithme ne commence pas par <strong>Algorithme Nom_algorithme</strong>");
+								this.addError(this.line, 'L\'algorithme ne commence pas par <strong>Algorithme Nom_algorithme</strong>');
 								this.line = -1;
 								return;
 							}
@@ -697,19 +750,22 @@ $(function() {
 							switch(this.mode) //this.mode cannot decrement, but it can jump one or two this.mode
 							{
 								case 1:
-									if(instruction.toLowerCase() == "types:"){
+									if(instruction.toLowerCase() == 'types:'){
 										this.mode = 2;
 										break;}
+									/* falls through */
 								case 2:
-									if(instruction.toLowerCase() == "variables:"){
+									if(instruction.toLowerCase() == 'variables:'){
 										this.mode = 3;
 										break;}
+									/* falls through */
 								case 3:
-									if(instruction.toLowerCase() == "instructions:"){
+									if(instruction.toLowerCase() == 'instructions:'){
 										this.mode = 4;
 										break;}
+									/* falls through */
 								default:
-									this.addError(thisthis.inputWait.line, 'Je m\'attendais à trouver <strong>Types:</strong>, <strong>Variables:</strong> ou <strong>Instructions:</strong> dans cet ordre mais ça n\'a pas été le cas');
+									this.addError(this.inputWait.line, 'Je m\'attendais à trouver <strong>Types:</strong>, <strong>Variables:</strong> ou <strong>Instructions:</strong> dans cet ordre mais ça n\'a pas été le cas');
 									this.line = -1;
 									return;
 							}
@@ -725,34 +781,34 @@ $(function() {
 							if(/^([^:]+):\s*([^: ]+)\s*;?$/i.test(instruction))
 							{
 								var vars = RegExp.$1;
-								var type = RegExp.$2.replace(/^\s\s*/, '').replace(/\s\s*$/, '').toLowerCase();
+								type = RegExp.$2.replace(/^\s\s*/, '').replace(/\s\s*$/, '').toLowerCase();
 								if(type == 'réels' || type == 'réel' || type == 'reels' || type == 'reel') type = 'réel';
 								else if(type == 'entier' || type == 'entiers') type = 'entier';
 								else if(type == 'caractères' || type == 'caractère' || type == 'caracteres' || type == 'caractere') type = 'caractère';
 								else if(type == 'booléens' || type == 'booléen' || type == 'booleens' || type == 'booleen') type = 'booléen';
 								else
 								{
-									addError(this.line, 'La type <strong>' + type + '</strong> n\'existe pas');
+									this.addError(this.line, 'La type <strong>' + type + '</strong> n\'existe pas');
 									return;
 								}
 								//Split vars
 								vars = vars.split(',');
-								for (var j = 0; j < vars.length; j++) 
+								for (var j = 0; j < vars.length; j++)
 								{
 									vars[j] = vars[j].replace(/^\s\s*/, '').replace(/\s\s*$/, '');
 									//Check if there is alway something between ","
-									if(vars[j] == "")
-										addError(this.line, 'Apparement, il y a une virgule en trop !', true);
+									if(vars[j] === '')
+										this.addError(this.line, 'Apparement, il y a une virgule en trop !', true);
 									else
 									{
 										//Check if var not already defined
-											if(this.varsTypes[vars[j]] == undefined)
+											if(this.varsTypes[vars[j]] === undefined)
 											{
-												this.varsNames.push(vars[j])
+												this.varsNames.push(vars[j]);
 												this.varsTypes[vars[j]] = type.toLowerCase();
 											}
 											else{
-												addError(this.line, 'La variable <strong>' + vars[j] + '</strong> a déjà été définie');
+												this.addError(this.line, 'La variable <strong>' + vars[j] + '</strong> a déjà été définie');
 												return;
 											}
 										//add to the trace table
@@ -770,55 +826,55 @@ $(function() {
 							//init screen & keyboard output
 								if(this.traceScreenLine == -1)
 								{
-									$('#trace').find('tbody').append('<tr><th>Écran</th></tr>');
-									$('#trace').find('tbody').append('<tr><th>Clavier</th></tr>');
+									$('#trace').find('tbody').append('<tr><th><em>Écran</em></th></tr>');
+									$('#trace').find('tbody').append('<tr><th><em>Clavier</em></th></tr>');
 									this.traceScreenLine = $('#trace').find('tbody').length-1;
 								}
 							//Find instruction
 							var screenOutput = '';
 							var keyboardInput = '';
-							var matches;
-							if((matches = instruction.match(/^([a-z0-9_]+)\s*<-\s*(.+)$/i)) != null) // <var> <- <expression>
+							var lineContent;
+							if((matches = instruction.match(/^([a-z0-9_]+)\s*<-\s*(.+)$/i)) !== null) // <var> <- <expression>
 							{
 								//Get type
-									if(this.varsTypes[matches[1]] == undefined)
+									if(this.varsTypes[matches[1]] === undefined)
 									{
-										this.addError(this.line, "La variable <strong>" + matches[1] + "</strong> n'est pas définie");
+										this.addError(this.line, 'La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
 										return false;
 									}
-									var type = this.varsTypes[matches[1]];
+									type = this.varsTypes[matches[1]];
 								//execute expression
 									var valueObj = this.executeExpression(matches[2]);
-									if(valueObj == false)
+									if(valueObj === false)
 										return false;
 								//Check type
-									if(valueObj.type != type && (valueObj.type == 'réel' && type == 'entier'))
+									if(valueObj.type != type && !(valueObj.type == 'entier' && type == 'réel'))
 									{
-										this.addError(this.line, "Vous ne pouvez pas assigner une valeur de type <strong>&lt;" + valueObj.type + "&gt;</strong> à une variable de type <strong>&lt;" + type + "&gt;</strong>.");
+										this.addError(this.line, 'Vous ne pouvez pas assigner une valeur de type <strong>&lt;' + valueObj.type + '&gt;</strong> à une variable de type <strong>&lt;' + type + '&gt;</strong>.');
 										return false;
 									}
 								//Set var
 									this.varsValues[matches[1]] = valueObj.value;
 
 							}
-							else if((matches = instruction.match(/^[ée]crire\s*\(\s*(.+)\s*!\s*\)$/i)) != null) // Ecrire(<expression>,<expression>, ... !)
+							else if((matches = instruction.match(/^[ée]crire\s*\(\s*(.+)\s*!\s*\)$/i)) !== null) // Ecrire(<expression>,<expression>, ... !)
 							{
 								var params = matches[1].splitUnquotted(',');
 								screenOutput = '';
-								for (var i = 0; i < params.length; i++) {
+								for (i = 0; i < params.length; i++) {
 									screenOutput += this.valueobjToString(this.executeExpression(params[i]),false);
-								};
+								}
 								$('#sortie').append('<li class="list-group-item">' + screenOutput + '</li>');
 								//scroll to the message TODO replace by function(element, scrollingArea, viewHeight)
 									//If the element is below the screen
 									if($('html, body').scrollTop() < ($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - $( window ).height()))
-										$('html, body').scrollTop($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - $( window ).height() )
+										$('html, body').scrollTop($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - $( window ).height() );
 									//else if the element is above
 									else if($('html, body').scrollTop() > $('#sortie').children('li').last().offset().top)
-										$('html, body').scrollTop($('#sortie').children('li').last().offset().top)						
+										$('html, body').scrollTop($('#sortie').children('li').last().offset().top);
 							
 							}
-							else if((matches = instruction.match(/^lire\s*\(\s*(.+)\s*!\s*([a-z0-9_]+)\s*\)$/i)) != null) // Lire(<source> ! <sortie>)
+							else if((matches = instruction.match(/^lire\s*\(\s*(.+)\s*!\s*([a-z0-9_]+)\s*\)$/i)) !== null) // Lire(<source> ! <sortie>)
 							{
 								//source
 								matches[1] = matches[1].replace(/^\s\s*/, '').replace(/\s\s*$/, '');
@@ -829,12 +885,12 @@ $(function() {
 								}
 								//destination var
 								matches[2] = matches[2].replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-								if(this.varsTypes[matches[2]] == undefined)
+								if(this.varsTypes[matches[2]] === undefined)
 								{
-									this.addError(this.line, "La variable <strong>" + matches[2] + "</strong> n'est pas définie");
+									this.addError(this.line, 'La variable <strong>' + matches[2] + '</strong> n\'est pas définie');
 									return false;
 								}
-								if(this.inputValue == '' && !this.inputCreated)
+								if(this.inputValue === '' && !this.inputCreated)
 								{
 									$('#sortie').append('<li class="list-group-item"><div class="input-group"><input type="text" class="form-control input-l'+this.line+' input-submit"/> '
 										+ '<span class="input-group-btn"><button class="btn btn-default btn-submit" type="button">Envoyer !</button></span></div></li>');
@@ -842,9 +898,12 @@ $(function() {
 									$('#sortie').find('.input-l' + this.line)[0].focus();
 									return false;
 								}
+								if(this.inputValue !== '' && !this.inputCreated)
+									this.inputSubmited = true;
 								if(this.inputSubmited)
 								{
-									keyboardInput = this.inputValue;
+									if(this.inputCreated)
+										keyboardInput = this.inputValue;
 									this.inputSubmited = false;
 									this.inputCreated = false;
 									//Set var
@@ -858,7 +917,7 @@ $(function() {
 											this.varsValues[matches[2]] = parseFloat(this.inputValue.replace(',','.'));
 											if(isNaN(this.varsValues[matches[2]]))
 											{
-												this.addError(this.line,'La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un réel')
+												this.addError(this.line,'La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un réel');
 												return false;
 											}
 											this.inputValue = '';
@@ -867,7 +926,7 @@ $(function() {
 											this.varsValues[matches[2]] = parseInt(this.inputValue);
 											if(isNaN(this.varsValues[matches[2]]))
 											{
-												this.addError(this.line,'La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un entier')
+												this.addError(this.line,'La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un entier');
 												return false;
 											}
 											this.inputValue = '';
@@ -888,41 +947,151 @@ $(function() {
 								}
 
 							}
+							else if((matches = instruction.match(/^((?:Sinon)?)Si\s*(.+)\s*Alors$/i)) !== null) // [Sinon]Si <expression=bool> Alors
+							{
+								matches[2] = matches[2].replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+								if(matches[2] === '')
+								{
+									this.addError(this.line, 'La condition du <strong>' + instruction + '</strong> est vide');
+									return false;
+								}
+								var condition = this.executeExpression(matches[2]);
+								if(condition.type != 'booléen')
+								{
+									this.addError(this.line, 'La condition du <strong>' + instruction + '</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + condition.type + '</strong>');
+									return false;
+								}
+								//save "if" position (if it's a "Si")
+								if(matches[1] === '')
+								{
+									this.controlFlow[this.controlFlow.length] = {};
+									this.controlFlow[this.controlFlow.length-1].type = 'if';
+									this.controlFlow[this.controlFlow.length-1].line = this.line;
+									this.controlFlow[this.controlFlow.length-1].value = condition;
+								}
+								// If it's a "SinonSi" continue if (the condition is true) AND (the if saved condition is false)
+								else if(matches[1].toLowerCase() == 'sinon')
+								{
+									if(this.controlFlow[this.controlFlow.length-1] === undefined || this.controlFlow[this.controlFlow.length-1].type != 'if')
+									{
+										//TODO changer le message d'erreur en fonction des différents contenus que this.controlFlow[this.controlFlow.length-1].type peut avoir
+										this.addError(this.line, 'je ne trouve pas le <strong>Si .. Alors</strong> correspondant à ce <strong>SinonSi .. Alors</strong>');
+										return false;
+									}
+									condition = (condition && !this.controlFlow[this.controlFlow.length-1].value);
+								}
+								//If condition not true, we look for 'Sinon', 'SinonSi' or 'FinSi'
+								if(!condition.value)
+								{
+									found = false;
+									for (i = this.line+1; i < this.editor.lineCount(); i++)
+									{
+										lineContent = this.editor.getLine(i).replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+										if(lineContent.substr(0,7).toLowerCase() == 'sinonsi')
+										{
+											found = true;
+											this.line = i-1;
+											break;
+										}
+										else if(lineContent.substr(0,5).toLowerCase() == 'sinon')
+										{
+											found = true;
+											this.line = i;
+											break;
+										}
+										else if(lineContent.substr(0,5).toLowerCase() == 'finsi')
+										{
+											this.controlFlow.pop();
+											found = true;
+											this.line = i;
+											break;
+										}
+									}
+									if(!found)
+									{
+										this.addError(this.line, 'je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Si .. Alors</strong>');
+										return false;
+									}
+								}
+
+							}
+							else if((matches = instruction.match(/^Sinon$/i)) !== null) // Sinon
+							{
+								if(this.controlFlow[this.controlFlow.length-1] === undefined || this.controlFlow[this.controlFlow.length-1].type != 'if')
+								{
+									//TODO changer le message d'erreur en fonction des différents contenus que this.controlFlow[this.controlFlow.length-1].type peut avoir
+
+									this.addError(this.line, 'je ne trouve pas le <strong>Si .. Alors</strong> correspondant à ce <strong>Sinon</strong>');
+									return false;
+								}
+								//If condition of if is true then we jump else we continue
+								if(this.controlFlow[this.controlFlow.length-1].value)
+								{
+									found = false;
+									for (i = this.line; i < this.editor.lineCount(); i++)
+									{
+										lineContent = this.editor.getLine(i).replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+										if(lineContent.substr(0,5).toLowerCase() == 'finsi')
+										{
+
+											this.controlFlow.pop();
+											found = true;
+											this.line = i;
+											break;
+										}
+									}
+									if(!found)
+									{
+										this.addError(this.line, 'je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Sinon</strong>');
+										return false;
+									}
+								}
+							}
+							else if((matches = instruction.match(/^FinSi$/i)) !== null) // FinSi
+							{
+								if(this.controlFlow[this.controlFlow.length-1] === undefined || this.controlFlow[this.controlFlow.length-1].type != 'if')
+								{
+									//TODO changer le message d'erreur en fonction des différents contenus que this.controlFlow[this.controlFlow.length-1].type peut avoir
+
+									this.addError(this.line, 'je ne trouve pas le <strong>Si .. Alors</strong> correspondant à ce <strong>FinSi</strong>');
+									return false;
+								}
+								this.controlFlow.pop();
+							}
 							else
 							{
-								this.addError(this.line, "Je ne comprend pas cette instruction : <strong>" + instruction + "</strong>");
+								this.addError(this.line, 'Je ne comprend pas cette instruction : <strong>' + instruction + '</strong>');
 								return false;
 							}
 
 							//Add column in the trace
-								$('#trace').children('thead').children('tr').append('<th>' + (this.line+1) + '</th>')
-								var that = this;
+								$('#trace').children('thead').children('tr').append('<th>' + (this.line+1) + '</th>');
 								var traceLine = 0;
 								$.each(this.varsNames, function(index, value){
 									if( that.varsLastValues[value] != that.varsValues[value] )
 									{
-										var valueObj = new Object();
+										var valueObj = {};
 										valueObj.value = that.varsValues[value];
 										valueObj.type = that.varsTypes[value];
 										valueObj.categorie = 'value';
-										$('#trace').children('tbody').children('tr').eq(traceLine).append('<td>' + that.valueobjToString(valueObj)	 + '</td>')
+										$('#trace').children('tbody').children('tr').eq(traceLine).append('<td>' + that.valueobjToString(valueObj) + '</td>');
 										that.varsLastValues[value] = that.varsValues[value];
 									}
 									else
-										$('#trace').children('tbody').children('tr').eq(traceLine).append('<td></td>')
+										$('#trace').children('tbody').children('tr').eq(traceLine).append('<td></td>');
 									traceLine ++;
 								});
 							//Screen output 
 								if(screenOutput.length >= 10)
 									screenOutput = screenOutput.substr(0,10) + '...';
 								$('#trace').children('tbody').children('tr').eq(traceLine).append('<td>' + screenOutput + '</td>');
-								if(screenOutput != '')
+								if(screenOutput !== '')
 									screenOutput = '';
 							//keyboard input
 								if(keyboardInput.length >= 10)
 									keyboardInput = keyboardInput.substr(0,10) + '...';
 								$('#trace').children('tbody').children('tr').eq(traceLine+1).append('<td>' + keyboardInput + '</td>');
-								if(keyboardInput != '')
+								if(keyboardInput !== '')
 									keyboardInput = '';
 								
 						}
@@ -936,31 +1105,31 @@ $(function() {
 				this.setActualLine(this.line);
 				
 				//to the next instrction
-				var that = this;
 				if(this.loopMode)
-		     		setTimeout(function(){that.nextLine()}, 0);
-		}
+					setTimeout(function(){that.nextLine();}, 0);
+		};
+
 
 
 		this.next = function()
 		{
 			this.loopMode = false;
 			this.nextLine();
-		}
+		};
 
 		//execute until the end
 		this.start = function()
 		{
 			//Buttons style
-				$('.btn-start').addClass('btn-pause')
-				$('.btn-start').html('<span class="glyphicon glyphicon-pause"></span> Mettre en pause')
-				$('.btn-start').removeClass('btn-start')
-				$('.btn-stop').removeAttr('disabled')
-				$('.btn-next').attr('disabled','disabled')
+				$('.btn-start').addClass('btn-pause');
+				$('.btn-start').html('<span class="glyphicon glyphicon-pause"></span> Mettre en pause');
+				$('.btn-start').removeClass('btn-start');
+				$('.btn-stop').removeAttr('disabled');
+				$('.btn-next').attr('disabled','disabled');
 			//Start interpreter
 				this.loopMode = true;
 				this.nextLine();
-		}
+		};
 
 		this.submit = function()
 		{
@@ -968,29 +1137,29 @@ $(function() {
 			{
 				$('#sortie').find('.input-l' + this.line).attr('disabled','disabled');
 				$('#sortie').find('.input-l' + this.line).parent().find('button').attr('disabled','disabled');
-				this.inputValue = $('#sortie').find('.input-l' + this.line)[0].value
+				this.inputValue = $('#sortie').find('.input-l' + this.line)[0].value;
 				this.inputCreated = true;
 				this.inputSubmited = true;
 				this.nextLine();
 			}
-		}
+		};
 
 
 		this.pause = function()
 		{
-			$('.btn-pause').addClass('btn-start')
-			$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer')
-			$('.btn-pause').removeClass('btn-pause')
-			$('.btn-next').removeAttr('disabled')
+			$('.btn-pause').addClass('btn-start');
+			$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer');
+			$('.btn-pause').removeClass('btn-pause');
+			$('.btn-next').removeAttr('disabled');
 			this.loopMode = false;
-		}
+		};
 
 
 		this.reset = function()
 		{
-			this.editor.toTextArea()
+			this.editor.toTextArea();
 			this.init();
-		}
+		};
 
 		this.disableEditor = function(disable)
 		{
@@ -998,41 +1167,25 @@ $(function() {
 			{
 				$('.CodeMirror').css('background-color', '#515151');
 				$('.CodeMirror-gutters').css('background-color', '#5a5a5a');
-				this.editor.setOption("readOnly", true);
+				this.editor.setOption('readOnly', true);
 			}
 			else
 			{
 				$('.CodeMirror').css('background-color', '#2c2827');
 				$('.CodeMirror-gutters').css('background-color', '#34302f');
-				this.editor.setOption("readOnly", false);
+				this.editor.setOption('readOnly', false);
 			}
-		}
-
+		};
 
 	}
-
-
-
-
-	scrollLikeFocus = function(element, scrollingArea, viewHeight)
-	{
-		//If the element is below the view
-		if(scrollingArea.scrollTop() < (element.offset().top + element.height() - viewHeight))
-			scrollingArea.scrollTop(element.offset().top + element.height() - viewHeight)
-		//else if the element is above
-		else if(scrollingArea.scrollTop() > element.offset().top)
-			scrollingArea.scrollTop(element.offset().top)		
-	}
-
-
 
 });
 //Split with ignore when between "" or ''
 String.prototype.splitUnquotted = function(separator)
 {
-	var out = []
+	var out = [];
 	out[0] = '';
-	stringMode = false;
+	var stringMode = false;
 	for (var i = 0; i < this.length; i++) {
 		if(stringMode)
 		{
@@ -1051,12 +1204,12 @@ String.prototype.splitUnquotted = function(separator)
 				out[out.length-1] += this[i];
 				stringMode = this[i];
 			}
-			else 
+			else
 				out[out.length-1] += this[i];
 		}
-	};
+	}
 	return out;
-}
+};
 
 // Array Remove - By John Resig (MIT Licensed)
 Array.prototype.remove = function(from, to) {
@@ -1069,7 +1222,7 @@ Array.prototype.remove = function(from, to) {
 /* Syntax:
    array.insert(index, value1, value2, ..., valueN) */
 Array.prototype.insert = function(index) {
-    this.splice.apply(this, [index, 0].concat(
-        Array.prototype.slice.call(arguments, 1)));
-    return this;
+	this.splice.apply(this, [index, 0].concat(
+		Array.prototype.slice.call(arguments, 1)));
+	return this;
 };
