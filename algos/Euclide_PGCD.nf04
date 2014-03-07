@@ -1,0 +1,22 @@
+Algorithme Euclide_PGCD
+Variables:
+	a, b, temp, reste : entier
+Instructions:
+    Ecrire("Enter un entier"!)
+    Lire(clavier ! a)
+    Ecrire("Enter un réel"!)
+    Lire(clavier ! b)
+    //a doit être > à b, donc si c'est pas le cas on les inverse
+    Si a < b Alors
+    	temp <- a
+        a <- b
+        b <- temp
+   	FinSi
+    
+  	reste <- a % b
+    Tant Que reste != 0 faire
+        a <- b
+        b <- reste
+        reste <- a % b
+   	FinTq
+    Ecrire(b !)

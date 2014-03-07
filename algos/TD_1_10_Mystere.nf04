@@ -1,0 +1,15 @@
+Algorithme TD_1_10_Mystere
+Variables:
+    fifi, bubu, dada, nono : entier
+Instructions:
+    Ecrire("Enter un entier"!)
+    Lire(clavier ! fifi)
+    Ecrire("Enter un réel"!)
+    Lire(clavier ! bubu)
+    nono <- fifi
+    dada <- 0
+    Tant Que nono >= bubu faire
+        nono <- nono - bubu
+        dada <- dada + 1        
+    FinTq
+    Ecrire(dada !)

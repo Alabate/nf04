@@ -1,0 +1,12 @@
+Algorithme TD_1_7_BouclePour
+Variables:
+	i, min, max : entier
+Instructions:
+	Ecrire("Enter un entier"!)
+    Lire(clavier ! min)
+    Ecrire("Enter un entier"!)
+    Lire(clavier ! max)
+    Pour i allant de min à max par pas de 1
+    	Ecrire(i!)
+    FinPour
+    Ecrire(i!)

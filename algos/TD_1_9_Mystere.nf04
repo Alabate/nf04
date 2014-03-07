@@ -1,0 +1,18 @@
+Algorithme TD_1_9_Mystere
+Variables:
+	bubu, fifi : réel
+	rara, indice, nono : entier
+Instructions:
+    Ecrire("Enter un entier"!)
+    Lire(clavier ! rara)
+    Ecrire("Enter un réel"!)
+    Lire(clavier ! fifi)
+	nono <- 0
+    Pour indice allant de 1 à rara par pas de 1
+    	Ecrire("Enter un réel"!)
+        Lire(clavier ! bubu)
+        Si bubu > fifi Alors
+        	nono <- nono + 1
+        FinSi
+   	FinPour
+    Ecrire(nono !)

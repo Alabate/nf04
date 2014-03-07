@@ -1,0 +1,10 @@
+Algorithme TD_1_8_BoucleTantque
+Variables:
+	val : entier
+Instructions:
+    Ecrire("Enter un entier"!)
+    Lire(clavier ! val)
+    Tant que val < 100 faire
+    	Ecrire(val !)
+        val <- val + 20
+    FinTq

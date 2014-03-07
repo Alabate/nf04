@@ -1,0 +1,16 @@
+Algorithme TD_1_11_Mystere
+Variables:
+    nb1, nb2 : entier
+Instructions:
+    Ecrire("Enter un entier"!)
+    Lire(clavier ! nb1)
+    Ecrire("Enter un réel"!)
+    Lire(clavier ! nb2)
+    Tant Que nb1 != nb2 faire
+        Si nb1 > nb2 Alors
+            nb1 <- nb1 - nb2
+        Sinon
+            nb2 <- nb2 - nb1
+        FinSi
+    FinTq
+    Ecrire(nb1 !)
