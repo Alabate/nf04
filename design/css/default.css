@@ -36,11 +36,11 @@ overflow: hidden;
 position: absolute;
 bottom: -16px;
 }
-.arrow.top {
+.arrow .top {
 	top: -16px;
 	bottom: auto;
 }
-.arrow.left {
+.arrow .left {
 left: 20%;
 }
 .arrow:after {
@@ -51,13 +51,13 @@ top: -20px;
 width: 25px;
 height: 25px;
 box-shadow: 6px 5px 9px -9px black;
+tranform: rotate(45deg);
 -webkit-transform: rotate(45deg);
 -moz-transform: rotate(45deg);
 -ms-transform: rotate(45deg);
 -o-transform: rotate(45deg);
-tranform: rotate(45deg);
 }
-.arrow.top:after {
+.arrow .top:after {
 bottom: -20px;
 top: auto;
 }
