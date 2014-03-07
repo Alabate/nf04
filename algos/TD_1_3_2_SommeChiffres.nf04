@@ -1,0 +1,15 @@
+Algorithme TD_1_3_2_SommeChiffres
+Variables:
+	nbr, somme, chiffre : entier
+Instructions:
+	Écrire("Entrez un nombre entier compris entre 0 et 9999" !)
+	Lire(clavier ! nbr)
+	somme <- 0
+	Tant que nbr > 0 faire
+		// Récupération du chiffre le plus à droite et ajout à la somme
+        chiffre <- nbr % 10
+        somme <- somme + chiffre
+        // Décale le nombre d’un chiffre sur la droite
+        nbr <- E((nbr - chiffre) / 10)
+	Fintq
+	Écrire("La somme des chiffres est de ", somme !)

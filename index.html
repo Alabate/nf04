@@ -18,21 +18,45 @@
 		<link href="design/css/default.css" rel="stylesheet"/>
 	</head>
 	<body>
-		<div class="navbar navbar-inverse" role="navigation">
+		<div class="navbar navbar-fixed-bottom control-bar" style="background-color: #F3F3F3;" role="navigation">
 			<div class="container">
-				<div class="navbar-header">
-					<a class="navbar-brand" href="http://alabate.github.io/nf04/">Interpréteur NF04</a>
-				</div>
+				<div class="container-fluid">
+					<ul class="nav navbar-nav algo-control">
+						<li><button class="link btn-start"><span class="glyphicon glyphicon-play"></span> Lancer</button></li>
+						<li><button class="link btn-next"><span class="glyphicon glyphicon-step-forward"></span> Instruction suivante</button></li>
+						<li><button class="link btn-stop"><span class="glyphicon glyphicon-remove-sign"></span> Remettre à zéro</button></li>
+					</ul>
+					<ul class="nav navbar-nav navbar-right">
+						<li class="disabled"><a href="#" class="btn-open" data-toggle="modal" data-target="#openModal"><span class="glyphicon glyphicon-folder-open"></span> Ouvrir</a></li>
+						<li><a href="#" class="btn-save"><span class="glyphicon glyphicon-floppy-disk"></span> Sauver</a></li>
+						<li class="dropdown">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-gift"></span>  Exemples <b class="caret"></b></a>
+							<ul class="dropdown-menu">
+								<li><a href="./?filename=Cours_1_Affectations">Chap 1 - Affectations</a></li>
+								<li><a href="./?filename=Cours_1_LireEcrire">Chap 1 - Lire Ecrire</a></li>
+								<li class="divider"></li>
+								<li><a href="./?filename=TD_1_5_Affectations">Chap 1 - Ex 5 - Affectations</a></li>
+								<li><a href="./?filename=TD_1_6_Saisie">Chap 1 - Ex 6 - Saisie</a></li>
+							</ul>
+						</li>
+						<li class="dropdown">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span>  Config <b class="caret"></b></a>
+							<ul class="dropdown-menu">
+								<li><a href="#">Mode rapide</a></li>
+								<li><a href="#">Signaler un bug</a></li>
+								<li><a href="#">Le language NF04</a></li>
+								<li><a href="#">A propos</a></li>
+							</ul>
+						</li>
+					</ul>
+				  </div><!-- /.container-fluid -->
 			</div>
 		</div>
       	<div class="container">
-			<h2>Algorithme</h2>
-      		<textarea id="code" disabled="disabled">Algorithme TD_1.6_Saisie
+			<h1>Interpréteur NF04</h1>
+      		<textarea id="code" disabled="disabled">Algorithme <nom>
 Variables:
-	x, y : entiers
-Instructions:
-	x <- (2*x+3*y)%(x+y)+1
-</textarea>
+Instructions:</textarea>
 			<div class="row">
 				<div class="btn-group algo-control col-sm-12 col-xs-12">
 					<button type="button" class="btn btn-default btn-start col-sm-4 col-xs-6">
@@ -41,9 +65,9 @@ Instructions:
 					<button type="button" class="btn btn-default btn-next col-sm-4 col-xs-6">
 						<span class="glyphicon glyphicon-step-forward"></span>
 						Instruction suivante</button>
-					<button type="button" class="btn btn-default btn-stop col-sm-4 col-xs-12" disabled="disabled">
-						<span class=" glyphicon glyphicon-stop"></span>
-						Arreter l'execution</button>
+					<button type="button" class="btn btn-default btn-stop col-sm-4 col-xs-12">
+						<span class=" glyphicon glyphicon-remove-sign"></span>
+						Remettre à zéro</button>
 				</div>
 			</div>
 
@@ -70,9 +94,32 @@ Instructions:
 		</div> <!-- /container -->
 
 
+		<!-- Open Modal -->
+		<div class="modal fade" id="openModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+						<h4 class="modal-title" id="myModalLabel">Ouvrir un fichier .nf04</h4>
+					</div>
+					<div class="modal-body">
+					<p>Pensez à sauvegarder le code actuel avant d'en ouvrir un autre !</p>
+					<p>Choisissez le fichier <strong>.nf04</strong> que vous souhaitez ouvrir :</strong>
+					<input type="file" name="openFile" id="openFile" accept=".nf04"/></p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+						<button type="button" class="btn btn-primary btn-submit-open">Ouvrir</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+
 	    <!-- JavaScript -->
 		<script src="design/js/jquery-1.10.2.js"></script>
-		<script src="design/js/jquery-ui-1.10.4.custom.min.js"></script>
+		<script src="design/js/bootstrap.js"></script>
 	    <script src="codemirror/lib/codemirror.js"></script>
 		<script src="codemirror/mode/javascript/javascript.js"></script>
 	    <script type="text/javascript" src="nf04.js"></script>

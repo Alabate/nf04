@@ -1,0 +1,18 @@
+Algorithme TD_1_3_4_suite
+Variables:
+	seuil, n : entier
+Instructions:
+    Écrire("Entrez un entier représentant le seuil A d’arrêt (exemple 1000)" !)
+    Lire(clavier ! seuil)
+    Écrire("Entrez un entier représentant le rang de départ de n (exemple 0)" !)
+    Lire(clavier ! n)
+    Écrire("U<small>n</small> = 3*n²+1" !)
+    Tant que 3*n*n+1 < seuil faire
+    	n <- n+1
+    Fintq
+    Écrire("Le premier rang est ", n, " car" !)
+    Écrire("U<small>", n-1, "</small> = ", 3*(n-1)*(n-1)+1 !)
+    Écrire("U<small>", n, "</small> = ", 3*n*n+1 !)
+//Cet algorithme utilise des balises html <small></small> servant a afficher le "n" en petit.
+//Cependant le language NF04 ne permet pas cela de base et si on essaye ce code sur un autre interpréteur, 
+//il affichera directement les balises sans changer la mise en forme du texte (=> ne pas faire ça en partiel)

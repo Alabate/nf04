@@ -1,0 +1,15 @@
+Algorithme Cours_1_Affectations
+Variables:
+	X,Y,A,B,C : réel
+	D : caractère
+	Z_positif : booléen
+Instructions:
+	A <- -1
+	B <- 1
+	C <- 6
+	D <- 'f'
+	X <- A+3
+	Y <- 3*A*X+2*B*X*X-1/2*C
+	Z_positif <- Y>=0
+	Z_positif <- D < 'c'
+	X <- X+1

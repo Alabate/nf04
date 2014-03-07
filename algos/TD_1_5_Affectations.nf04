@@ -1,0 +1,9 @@
+Algorithme TD_1_5_Affectations
+Variables:
+	A, B, C : caractères
+Instructions:
+	A <- 'T'
+	B <- 'A'
+	C <- 'G'
+	A <- C
+    Ecrire(A,B,C!)

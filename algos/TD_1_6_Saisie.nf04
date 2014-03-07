@@ -1,0 +1,22 @@
+Algorithme TD_1_6_Saisie
+Variables:
+	fifi, bubu, dada, nono : caractères
+Instructions:
+	Ecrire("Entrer un entier à 3 chiffres et un mot de 3 lettres"!)
+    // L'exercice du TD demande de rentrer 214loi
+    Lire(clavier ! fifi)
+    Lire(clavier ! bubu)
+    Lire(clavier ! dada)
+    Lire(clavier ! nono)
+    Ecrire(fifi !)
+    Ecrire(bubu !)
+    Ecrire(dada !)
+    Ecrire(nono !)
+	Ecrire("Entrer un mot de 3 lettres"!)
+    // L'exercice du TD demande de rentrer zen
+    Lire(clavier ! fifi)
+    Lire(clavier ! bubu)
+    Lire(clavier ! dada)
+    Ecrire(fifi !)
+    Ecrire(bubu !)
+    Ecrire(dada !)

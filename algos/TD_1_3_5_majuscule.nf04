@@ -1,0 +1,13 @@
+Algorithme TD_1_3_5_majuscule
+Variables:
+	caractere : caractère
+Instructions:
+	Écrire("Entrez un caractère à tester" !)
+   	Lire(clavier ! caractere)
+	Si caractere >= 'A' ET caractere <= 'Z' alors
+		Écrire("Le caractère est une majuscule" !)
+    SinonSi caractere >= 'a' ET caractere <= 'z' alors
+		Écrire("Le caractère est une minuscule" !)
+   	Sinon
+		Écrire("Le caractère n’est pas une lettre" !)
+	FinSi

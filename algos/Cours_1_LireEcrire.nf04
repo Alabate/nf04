@@ -1,0 +1,16 @@
+Algorithme Cours_1_LireEcrire
+Types:
+Variables:
+    note, moyenne : réel
+Instructions:
+	Écrire ("Entrez la valeur de la note 1 (réel entre 0 et 20)" !)
+	Lire (clavier ! note)	
+	moyenne <- note
+	Écrire ("Entrez la valeur de la note 2 (réel entre 0 et 20)" !)
+	Lire (clavier ! note)
+	moyenne <- moyenne + note
+	Écrire ("Entrez la valeur de la note 3 (réel entre 0 et 20)" !)
+	Lire (clavier ! note)
+	moyenne <- moyenne + note
+	moyenne <- moyenne / 3
+	Écrire ("La moyenne est de ", moyenne !)

@@ -18,49 +18,7 @@
 	background-color:#755319;
 }
 
-.ui-tooltip {
-    padding:2px;
-    font-size:12px;
-    border:none;
-    max-width:100%;
-}
 
- .ui-tooltip, .arrow:after {
-border: 2px solid white;
-background-color: white;
-}
-.arrow {
-width: 70px;
-height: 16px;
-overflow: hidden;
-position: absolute;
-bottom: -16px;
-}
-.arrow .top {
-	top: -16px;
-	bottom: auto;
-}
-.arrow .left {
-left: 20%;
-}
-.arrow:after {
-content: "";
-position: absolute;
-left: 0;
-top: -20px;
-width: 25px;
-height: 25px;
-box-shadow: 6px 5px 9px -9px black;
-tranform: rotate(45deg);
--webkit-transform: rotate(45deg);
--moz-transform: rotate(45deg);
--ms-transform: rotate(45deg);
--o-transform: rotate(45deg);
-}
-.arrow .top:after {
-bottom: -20px;
-top: auto;
-}
 
 .list-group-item{
 	padding-top:2px;
@@ -77,3 +35,64 @@ top: auto;
 
 .btn-start{border-top-left-radius: 0}
 .btn-stop{border-top-right-radius: 0}
+
+
+
+
+.control-bar{
+	height:30px;
+	min-height:30px;
+	line-height:30px;
+	font-size:17px;
+	border-top:solid #e5e5e5 1px;
+}
+.control-bar .navbar-nav > li > button.link, .control-bar .navbar-nav > li > a{
+	padding-top:0;
+	padding-bottom: 0;
+	line-height: 28px;
+	outline: 0;
+	/*color:#fff;*/
+
+	text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.25);
+	color: #428BCA;
+	border:0;
+	padding:0 15px;
+}
+
+.control-bar .navbar-nav > li > button.link:hover, .control-bar .navbar-nav > li > a:hover{
+	background-color:#eeeeee;
+	color:#296396;
+}
+.control-bar .navbar-nav > li > button.link[disabled=disabled]{
+	color:#999999;
+}
+.control-bar .navbar-nav > li > button.link[disabled=disabled]:hover{
+	background-color:#f3f3f3;
+}
+.control-bar .navbar-nav > li > button.link > .glyphicon, .control-bar .navbar-nav > li > a > .glyphicon{
+	font-size:12px;
+	vertical-align: top;
+	line-height: 26px;
+}
+
+.control-bar .navbar-nav > li.disabled > a{
+	cursor:default;
+	color:#999999;
+}
+
+
+
+.tooltip.in {
+	opacity: 1;
+}
+.tooltip-inner {
+    max-width: 500px;
+	border: 1px solid #d9d9d9;
+	background-color: white;
+	color:#333333;
+	box-shadow: 6px 5px 9px -9px black;
+}
+.tooltip.top .tooltip-arrow {
+	border-top-color: #fff;
+	bottom:1px;
+}

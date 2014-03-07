@@ -2,6 +2,20 @@
 //This declares to JSHint that $ and codemirror are global variable, and the false indicates that it should not be overridden.
 	/* global $:false, CodeMirror:false */
 $(function () {
+	//init control bar button - Check for the various File API support.
+	if (window.File && window.FileReader)
+	{
+		$('.btn-open').parent().removeClass('disabled');
+	}
+	else
+	{
+		$('.btn-open').tooltip({
+			'html':true,
+			'title': 'Votre navigateur n\'est pas compatible avec cette option. <br/>Mettez-le à jour ou utilisez en un autre !',
+			'container': 'body'
+		});
+	}
+
 	//interpreter object
 	function NF04()
 	{
@@ -11,7 +25,6 @@ $(function () {
 			$('.btn-pause').addClass('btn-start');
 			$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer');
 			$('.btn-pause').removeClass('btn-pause');
-			$('.btn-stop').attr('disabled','disabled');
 			$('.btn-next').removeAttr('disabled');
 			$('.btn-start').removeAttr('disabled');
 			//init vars
@@ -52,30 +65,11 @@ $(function () {
 			var editor = this.editor;
 			$.each(this.tooltipMsgs,function(index, value){
 				editor.addLineClass(index, 'wrap', 'tooltip-msg tooltip-msg-' + index);
-				$( '.tooltip-msg' ).tooltip({
-					position: {
-						my: 'left bottom-10',
-						at: 'left top',
-						using: function( position, feedback ) {
-							$( this ).css( position );
-							$( '<div>' )
-							.addClass( 'arrow' )
-							.addClass( feedback.vertical )
-							.addClass( feedback.horizontal )
-							.appendTo( this );
-						}
-					},
-					hide: {
-						effect: 'hide',
-						delay: 0
-					},
-					show: {
-						effect: 'show',
-						delay: 0
-					}
+				$( '.tooltip-msg-' + index ).tooltip({
+					'html':true,
+					'title':value,
+					'container': 'body'
 				});
-				$( '.tooltip-msg-' + index ).attr('title','');
-				$( '.tooltip-msg-' + index ).tooltip( 'option', 'content', value);
 			});
 		};
 		//add error mark on editor
@@ -102,11 +96,12 @@ $(function () {
 				//stop ui except reset button
 				this.editor.removeLineClass(line, 'background', 'actualLine');
 				this.line = -1;
+				this.loopMode = false;
 				$('.btn-start').attr('disabled','disabled');
 				$('.btn-pause').attr('disabled','disabled');
 				$('.btn-next').attr('disabled','disabled');
 				$('.btn-submit').attr('disabled','disabled');
-				$('.btn-stop').removeAttr('disabled');
+
 				this.disableEditor(false);
 			}
 			this.editor.setGutterMarker(line, 'errorMark', marker);
@@ -308,6 +303,7 @@ $(function () {
 			if(!result)
 			{
 				this.addError(this.line, 'Expression source du problème : <strong>' + oldExpressionString + '</strong>. <br/> Transformé en <strong>' + this.expressionString(out) + '</strong>.');
+				return false;
 			}
 			return result;
 		};
@@ -763,6 +759,12 @@ $(function () {
 				this.setActualLine(-1);
 				this.disableEditor(false);
 				this.loopMode = false;
+
+				$('.btn-start').attr('disabled','disabled');
+				$('.btn-pause').attr('disabled','disabled');
+				$('.btn-next').attr('disabled','disabled');
+				$('.btn-submit').attr('disabled','disabled');
+
 				//Reach the end without find all end of control flow instructions
 				if(this.controlFlow.length > 0 && this.controlFlow[this.controlFlow.length-1] !== undefined)
 				{
@@ -797,8 +799,7 @@ $(function () {
 					else
 					{
 						this.addError(this.line, 'L\'algorithme ne commence pas par <strong>Algorithme Nom_algorithme</strong>');
-						this.line = -1;
-						return;
+						return false;
 					}
 				}
 
@@ -827,8 +828,7 @@ $(function () {
 							/* falls through */
 						default:
 							this.addError(this.inputWait.line, 'Je m\'attendais à trouver <strong>Types:</strong>, <strong>Variables:</strong> ou <strong>Instructions:</strong> dans cet ordre mais ça n\'a pas été le cas');
-							this.line = -1;
-							return;
+							return false;
 					}
 				}
 
@@ -1462,9 +1462,8 @@ $(function () {
 		{
 			//Buttons style
 			$('.btn-start').addClass('btn-pause');
-			$('.btn-start').html('<span class="glyphicon glyphicon-pause"></span> Mettre en pause');
+			$('.btn-start').html('<span class="glyphicon glyphicon-pause"></span> Pause');
 			$('.btn-start').removeClass('btn-start');
-			$('.btn-stop').removeAttr('disabled');
 			$('.btn-next').attr('disabled','disabled');
 			//Start interpreter
 			this.loopMode = true;
@@ -1520,23 +1519,91 @@ $(function () {
 	}
 	// end of interpreter object NF04
 
+
 	//Init interpreter
 	var nf04 = new NF04();
 
 	//events
 	$('.algo-control').on('click','.btn-start', function(){
 		nf04.start();
+		return false;
 	});
 	$('.algo-control').on('click','.btn-pause', function(){
 		nf04.pause();
+		return false;
 	});
 
 	$('.algo-control').on('click','.btn-next', function(){
 		nf04.next();
+		return false;
 	});
-
 	$('.algo-control').on('click','.btn-stop', function(){
 		nf04.reset();
+		return false;
+	});
+
+
+	$('.control-bar').on('click','.btn-open', function(){
+		if($(this).parent().hasClass('disabled'))
+		{
+			return false;
+		}
+		return true;
+	});
+
+
+	$('#openModal').on('change','#openFile', function(){
+		$('#openModal').find('.btn-submit-open').tooltip('hide');
+	});
+
+	$('#openModal').on('click','.btn-submit-open', function(){
+
+		//Check if there is a file
+		if($('#openModal').find('#openFile')[0].files.length === 0)
+		{
+			$('#openModal').find('.btn-submit-open').tooltip('destroy');
+			$('#openModal').find('.btn-submit-open').tooltip({
+				'html':true,
+				'title':'Vous devez sélectionner un fichier',
+				'container': '#openModal',
+				'trigger': 'manual'
+			});
+			$('#openModal').find('.btn-submit-open').tooltip('show');
+			return false;
+		}
+
+		//Check file size
+		if($('#openModal').find('#openFile')[0].files[0].size >= 100000)
+		{
+			$('#openModal').find('.btn-submit-open').tooltip('destroy');
+			$('#openModal').find('.btn-submit-open').tooltip({
+				'html':true,
+				'title':'Votre fichier est trop gros',
+				'container': '#openModal',
+				'trigger': 'manual'
+			});
+			$('#openModal').find('.btn-submit-open').tooltip('show');
+			return false;
+		}
+
+		//Load file
+		var reader = new FileReader();
+		reader.onload = function(theFile)
+		{
+			nf04.editor.getDoc().setValue(theFile.target.result);
+			nf04.reset();
+			$('#openModal').modal('hide');
+		};
+		reader.readAsText($('#openModal').find('#openFile')[0].files[0], 'UTF-8');
+	});
+
+	$('.control-bar').on('click','.btn-save', function(){
+		var link = document.createElement('a');
+	    link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(nf04.editor.getDoc().getValue()));
+	    link.setAttribute('download', "algo.nf04");
+	    document.body.appendChild(link)
+	    link.click();
+	    link.remove();
 	});
 
 
@@ -1550,14 +1617,26 @@ $(function () {
 			nf04.submit();
 		}
 	});
+
 	nf04.editor.on('change', function()
 	{
-		$('.ui-tooltip').hide();
+		nf04.tooltipMsgs = [];
+		nf04.updateTooltips();
 	});
 
 
-
-
+	//Open filename parameter in url
+	var params = getSearchParameters();
+	if(params !== undefined && params.filename !== undefined && params.filename.indexOf('/') == -1)
+	{
+		$.ajax({
+			url:         './algos/' + params.filename + '.nf04',
+			type:        'GET',
+			dataType:    'text',
+			cache:       false,
+			success:     function(data){nf04.editor.getDoc().setValue(data);}
+		});
+	}
 });
 
 //remove Strip whitespace from the beginning and end of a string
@@ -1614,3 +1693,20 @@ Array.prototype.insert = function(index) {
 		Array.prototype.slice.call(arguments, 1)));
 	return this;
 };
+
+// Get all "get parameters"
+// 	from http://stackoverflow.com/questions/5448545/how-to-retrieve-get-parameters-from-javascript
+// 	author : weltraumpirat
+function transformToAssocArray(prmstr) {
+    var params = {};
+    var prmarr = prmstr.split('&');
+    for ( var i = 0; i < prmarr.length; i++) {
+        var tmparr = prmarr[i].split('=');
+        params[tmparr[0]] = tmparr[1];
+    }
+    return params;
+}
+function getSearchParameters() {
+	var prmstr = window.location.search.substr(1);
+	return (prmstr !== null && prmstr !== '' )? transformToAssocArray(prmstr) : {};
+}

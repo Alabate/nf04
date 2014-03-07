@@ -1,0 +1,15 @@
+Algorithme TD_1_3_3_suite
+Variables:
+	borneSup, borneInf, n : entier
+Instructions:
+    Écrire("Entrez un entier représentant la valeur minimale de n" !)
+    Lire(clavier ! borneInf )
+    Écrire("Entrez un entier représentant la valeur maximale de n" !)
+    Lire(clavier ! borneSup)
+    Écrire("U<small>n</small> = 5*n+3" !)
+    Pour n allant de borneInf à borneSup par pas de 1
+    	Écrire("U<small>",n,"</small> = ",(5*n+3) !)
+    FinPour
+//Cet algorithme utilise des balises html <small></small> servant a afficher le "n" en petit.
+//Cependant le language NF04 ne permet pas cela de base et si on essaye ce code sur un autre interpréteur, 
+//il affichera directement les balises sans changer la mise en forme du texte (=> ne pas faire ça en partiel)
