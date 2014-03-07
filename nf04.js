@@ -967,8 +967,8 @@ $(function () {
 
 						//scroll to the message
 						//If the element is below the screen
-						if($('html, body').scrollTop() < ($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - $( window ).height())){
-							$('html, body').scrollTop($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - $( window ).height() );
+						if($('html, body').scrollTop() < ($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30))){
+							$('html, body').scrollTop($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30));
 						}
 						//else if the element is above
 						else if($('html, body').scrollTop() > $('#sortie').children('li').last().offset().top){
