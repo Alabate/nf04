@@ -339,6 +339,12 @@ $(function () {
 				out.categorie = 'value';
 				out.type = 'entier';
 			}
+			else if(value.match(/^0x([0-9a-f]+)$/i) !== null) //Entier hexadécimal
+			{
+				out.value = parseInt(value,16);
+				out.categorie = 'value';
+				out.type = 'entier';
+			}
 			else if(value.match(/^([0-9,\.]+)$/i) !== null) //Réel
 			{
 				out.value = parseFloat(value.replace(',','.'));
@@ -427,7 +433,7 @@ $(function () {
 			var i;
 			//console.log(this.expressionString(input));
 			//Remove () if they are useless
-			if(input[0].categorie == '(' && input[input.length-1].categorie == ')')
+			if((input[0].categorie == '(' || input[0].categorie == 'function') && input[input.length-1].categorie == ')')
 			{
 				//Test if first and last parenthese are together
 				var deleteThem = true;
@@ -448,8 +454,18 @@ $(function () {
 				}
 				if(deleteThem)
 				{
-					input.shift();
-					input.pop();
+					if(input[0].categorie == '('){
+						input.shift();
+						input.pop();
+					}
+					else if(input[0].categorie == 'function')
+					{
+						//TODO fix the problem of , considered as decimal separator everytime, and considere it as parameters separator
+						var funcName = input[0].value;
+						input.shift();
+						input.pop();
+						return this.executeFunction(funcName, input);
+					}
 				}
 			}
 
@@ -605,9 +621,17 @@ $(function () {
 					out.value = valueObj1.value * valueObj2.value;
 					break;
 				case '/':
+					if(valueObj2.value === 0) {
+						this.addError(this.line, 'On t\'a jamais dit que c\'était interdit de diviser par 0 ?');
+						return false;
+					}
 					out.value = valueObj1.value / valueObj2.value;
 					break;
 				case '%':
+					if(valueObj2.value === 0) {
+						this.addError(this.line, 'On t\'a jamais dit que c\'était interdit de diviser par 0 ?');
+						return false;
+					}
 					out.value = valueObj1.value % valueObj2.value;
 					break;
 				case '=':
@@ -688,6 +712,36 @@ $(function () {
 			}
 			else {
 				return valueObj.value;
+			}
+		};
+
+		this.executeFunction = function(funcName, input)
+		{
+			var value;
+			switch(funcName)
+			{
+				case 'e':
+					value = this.evaluateExpression(input);
+					if(value.type != 'réel')
+					{
+						this.addError(this.line, 'Vous ne pouvez pas utiliser la fonction <strong>E()</strong> sur une valeur de type <strong>' + value.type + '</strong>. Cette fonction n\'accepte que des <strong>réels</strong>');
+						return false;
+					}
+					value.value = Math.floor(value.value);
+					value.type = 'entier';
+					return value;
+				case 'non':
+					value = this.evaluateExpression(input);
+					if(value.type != 'booléen')
+					{
+						this.addError(this.line, 'Vous ne pouvez pas utiliser la fonction <strong>NON()</strong> sur une valeur de type <strong>' + value.type + '</strong>. Cette fonction n\'accepte que des <strong>booléens</strong>');
+						return false;
+					}
+					value.value = !(value.value);
+					return value;
+				default:
+					this.addError(this.line, 'La fonction <strong>' + funcName + '()</strong> n\'existe pas');
+					return false;
 			}
 		};
 
@@ -868,6 +922,8 @@ $(function () {
 					var screenOutput = '';
 					var keyboardInput = '';
 					var lineContent;
+					var condition;
+					var dontTrace = false;
 					if((matches = instruction.match(/^([a-z0-9_]+)\s*<-\s*(.+)$/i)) !== null) // <var> <- <expression>
 					{
 						//Get type
@@ -1015,6 +1071,7 @@ $(function () {
 								this.controlFlow.pop();
 								found = true;
 								this.line = i;
+								dontTrace = true;
 								break;
 							}
 						}
@@ -1035,7 +1092,7 @@ $(function () {
 							this.addError(this.line, 'La condition du <strong>' + instruction + '</strong> est vide');
 							return false;
 						}
-						var condition = this.executeExpression(matches[1]);
+						condition = this.executeExpression(matches[1]);
 						if(condition.type != 'booléen')
 						{
 							this.addError(this.line, 'La condition du <strong>' + instruction + '</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + condition.type + '</strong>');
@@ -1092,6 +1149,8 @@ $(function () {
 									found = true;
 									this.addTraceColumn(this.line);
 									this.line = i;
+									console.log("bob")
+									dontTrace = true;
 									break;
 								}
 							}
@@ -1118,6 +1177,7 @@ $(function () {
 							return false;
 						}
 						this.controlFlow.pop();
+						dontTrace = true;
 					}
 
 					// Pour<variable (entier)> de <expression (entier)> à<expression (entier)> par pas de <expression (entier)>
@@ -1245,28 +1305,107 @@ $(function () {
 						}
 					}
 
+					// Tant que <expression (booléen)> faire
+					else if((matches = instruction.match(/^Tant\s+que\s+(.+)\s+faire$/i)) !== null)
+					{
+
+						//check condition
+						matches[1] = matches[1].trim();
+						if(matches[1] === '') {
+							this.addError(this.line, 'La condition de la boucle <strong>Tant que</strong> est vide');
+							return false;
+						}
+						condition = this.executeExpression(matches[1]);
+						if(condition.type != 'booléen') {
+							this.addError(this.line, 'La condition de la boucle <strong>Tant que</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + cond.type + '</strong>');
+							return false;
+						}
+
+						//Test condition, if false jump to "Fintq"
+						if(!condition.value)
+						{
+							found = false;
+							for (i = this.line+1; i < this.editor.lineCount(); i++)
+							{
+								lineContent = this.editor.getLine(i).trim();
+								if(lineContent.toLowerCase() == 'fintq')
+								{
+									this.addTraceColumn(this.line);
+									found = true;
+									this.line = i;
+									break;
+								}
+							}
+							if(!found)
+							{
+								this.addError(this.line, 'je ne trouve pas le <strong>Fintq</strong> correspondant à ce <strong>Tant que</strong>');
+								return false;
+							}
+						}
+						else
+						{
+							//save "Pour" position
+							this.controlFlow[this.controlFlow.length] = {};
+							this.controlFlow[this.controlFlow.length-1].type = 'Tant que';
+							this.controlFlow[this.controlFlow.length-1].line = this.line;
+							this.controlFlow[this.controlFlow.length-1].conditionStr = matches[1];
+						}
+					}
+
+					// Fintq
+					else if((matches = instruction.match(/^Fintq$/i)) !== null)
+					{
+						if(this.controlFlow[this.controlFlow.length-1] === undefined)
+						{
+							this.addError(this.line, 'je ne trouve pas le <strong>Tant que</strong> correspondant à ce <strong>Fintq</strong>.');
+							return false;
+						}
+						else if(this.controlFlow[this.controlFlow.length-1].type != 'Tant que')
+						{
+							this.addError(this.line, 'je ne trouve pas le <strong>Tant que</strong> correspondant à ce <strong>Fintq</strong>. A la place je trouve un <strong>' + this.controlFlow[this.controlFlow.length-1].type + '</strong>');
+							return false;
+						}
+
+						//increment and test condition
+						var tqData = this.controlFlow[this.controlFlow.length-1];
+						condition = this.executeExpression(tqData.conditionStr);
+						
+						//Test condition, if false jump to "FinPour"
+						if(condition.value)
+						{
+							this.line = tqData.line;
+						}
+						else
+						{
+							this.controlFlow.pop();
+						}
+					}
+
 					else
 					{
 						this.addError(this.line, 'Je ne comprend pas cette instruction : <strong>' + instruction + '</strong>');
 						return false;
 					}
 
+					console.log(dontTrace);
+					if(!dontTrace)
+					{
+						var traceEndLine = this.addTraceColumn(this.line);
+						//Screen output 
+						if(screenOutput.length >= 10) {
+							screenOutput = screenOutput.substr(0,10) + '..';
+						}
+						$('#trace').children('tbody').children('tr').eq(traceEndLine).children('td').last().html(screenOutput);
+						screenOutput = '';
 
-					var traceEndLine = this.addTraceColumn(this.line);
-					//Screen output 
-					if(screenOutput.length >= 10) {
-						screenOutput = screenOutput.substr(0,10) + '..';
-					}
-					$('#trace').children('tbody').children('tr').eq(traceEndLine).children('td').last().html(screenOutput);
-					screenOutput = '';
-
-					//keyboard input
-					if(keyboardInput.length >= 10) {
-						keyboardInput = keyboardInput.substr(0,10) + '..';
-					}
-					$('#trace').children('tbody').children('tr').eq(traceEndLine+1).children('td').last().html(keyboardInput);
-					if(keyboardInput !== '') {
-						keyboardInput = '';
+						//keyboard input
+						if(keyboardInput.length >= 10) {
+							keyboardInput = keyboardInput.substr(0,10) + '..';
+						}
+						$('#trace').children('tbody').children('tr').eq(traceEndLine+1).children('td').last().html(keyboardInput);
+						if(keyboardInput !== '') {
+							keyboardInput = '';
+						}
 					}
 				}
 

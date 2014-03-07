@@ -67,3 +67,89 @@ Instructions:
     Ecrire(fifi !)
     Ecrire(bubu !)
     Ecrire(dada !)
+
+
+
+Algorithme TD_1.3_1.Absolue
+Variables:
+	nbr : réel
+Instructions:
+	Écrire("Entrez un réel" !)
+		Lire(clavier ! nbr)
+	Si nbr < 0 alors
+    	nbr <- -nbr
+    FinSi
+    Écrire(nbr !)
+
+
+Algorithme TD_1.3_2.SommeChiffres
+Variables:
+	nbr, somme, chiffre : entier
+Instructions:
+	Écrire("Entrez un nombre entier compris entre 0 et 9999" !)
+	Lire(clavier ! nbr)
+	somme <- 0
+	Tant que nbr > 0 faire
+		// Récupération du chiffre le plus à droite et ajout à la somme
+        chiffre <- nbr % 10
+        somme <- somme + chiffre
+        // Décale le nombre d’un chiffre sur la droite
+        nbr <- E((nbr - chiffre) / 10)
+	Fintq
+	Écrire("La somme des chiffres est de ", somme !)
+
+
+Algorithme TD_1.3_3.suite
+Variables:
+	borneSup, borneInf, n : entier
+Instructions:
+    Écrire("Entrez un entier représentant la valeur minimale de n" !)
+    Lire(clavier ! borneInf )
+    Écrire("Entrez un entier représentant la valeur maximale de n" !)
+    Lire(clavier ! borneSup)
+    Écrire("U<small>n</small> = 5*n+3" !)
+    Pour n allant de borneInf à borneSup par pas de 1
+    	Écrire("U<small>",n,"</small> = ",(5*n+3) !)
+    FinPour
+//Cet algorithme utilise des balises html <small></small> servant a afficher le "n" en petit.
+//Cependant le language NF04 ne permet pas cela de base et si on essaye ce code sur un autre interpréteur, 
+//il affichera directement les balises sans changer la mise en forme du texte (=> ne pas faire ça en partiel)
+
+
+
+
+
+Algorithme TD_1.3_4.suite
+Variables:
+	seuil, n : entier
+Instructions:
+    Écrire("Entrez un entier représentant le seuil A d’arrêt (exemple 1000)" !)
+    Lire(clavier ! seuil)
+    Écrire("Entrez un entier représentant le rang de départ de n (exemple 0)" !)
+    Lire(clavier ! n)
+    Écrire("U<small>n</small> = 3*n²+1" !)
+    Tant que 3*n*n+1 < seuil faire
+    	n <- n+1
+    Fintq
+    Écrire("Le premier rang est ", n, " car" !)
+    Écrire("U<small>", n-1, "</small> = ", 3*(n-1)*(n-1)+1 !)
+    Écrire("U<small>", n, "</small> = ", 3*n*n+1 !)
+//Cet algorithme utilise des balises html <small></small> servant a afficher le "n" en petit.
+//Cependant le language NF04 ne permet pas cela de base et si on essaye ce code sur un autre interpréteur, 
+//il affichera directement les balises sans changer la mise en forme du texte (=> ne pas faire ça en partiel)
+
+
+
+Algorithme TD_1.3_5.majuscule
+Variables:
+	caractere : caractère
+Instructions:
+	Écrire("Entrez un caractère à tester" !)
+   	Lire(clavier ! caractere)
+	Si caractere >= 'A' ET caractere <= 'Z' alors
+		Écrire("Le caractère est une majuscule" !)
+    SinonSi caractere >= 'a' ET caractere <= 'z' alors
+		Écrire("Le caractère est une minuscule" !)
+   	Sinon
+		Écrire("Le caractère n’est pas une lettre" !)
+	FinSi
