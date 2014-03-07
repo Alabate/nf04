@@ -1,0 +1,17 @@
+Algorithme TD_2_3_Racine
+Variables:
+	n : entier
+    input : reel
+Instructions:
+    Ecrire("Entrez un nombre réel positif"!)
+    Lire(clavier ! input)
+    n <- 0
+    Tant que n*n < input faire
+    	n <- n + 1
+    Fintq
+    //Sortie
+    Si n*n = input Alors
+    	Ecrire("La racine de ", input, " est ", n!)
+    Sinon
+    	Ecrire("La racine de ", input, " est comprise entre ", n-1 , " et ", n!)
+  	FinSi

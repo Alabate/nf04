@@ -56,6 +56,7 @@ $(function () {
 			});
 			//hide old tooltips
 			$('[rel=tooltip]').tooltip('hide');
+			$('.tooltip').css('display', 'none');
 
 		};
 		// and init !
@@ -65,6 +66,7 @@ $(function () {
 		this.updateTooltips = function()
 		{
 			$('[rel=tooltip]').tooltip('hide');
+			$('.tooltip').css('display', 'none');
 			var editor = this.editor;
 			$.each(this.tooltipMsgs,function(index, value){
 				editor.addLineClass(index, 'wrap', 'tooltip-msg tooltip-msg-' + index);

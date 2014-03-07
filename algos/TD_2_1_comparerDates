@@ -1,0 +1,44 @@
+Algorithme TD_2_1_comparerDates
+Variables:
+    date1_jour, date1_mois, date1_annee : entier
+    date2_jour, date2_mois, date2_annee : entier
+    result, memeDates : booléen
+Instructions:
+	//Input date 1
+    Ecrire("Entrez la première date"!)
+    Ecrire("Jour"!)
+    Lire(clavier ! date1_jour)
+    Ecrire("Mois"!)
+    Lire(clavier ! date1_mois)
+    Ecrire("Année (4 chiffres)"!)
+    Lire(clavier ! date1_annee)
+    
+	//Input date 2
+    Ecrire("Entrez la seconde date"!)
+    Ecrire("Jour"!)
+    Lire(clavier ! date2_jour)
+    Ecrire("Mois"!)
+    Lire(clavier ! date2_mois)
+    Ecrire("Année (4 chiffres)"!)
+    Lire(clavier ! date2_annee)
+    
+    //Tests
+	memeDates <- Faux  
+    Si date1_annee != date2_annee Alors
+    	result <- (date1_annee < date2_annee)
+    SinonSi date1_mois != date2_mois Alors
+    	result <- (date1_mois < date2_mois)
+    SinonSi date1_jour != date2_jour Alors
+    	result <- (date1_jour < date2_jour)
+   	Sinon
+		memeDates <- Vrai
+    FinSi
+    
+   	//Sortie
+    Si memeDates Alors
+        Ecrire("Ce sont les mêmes dates : ", date2_jour, "/", date2_mois, "/", date2_annee !)
+    SinonSi result Alors
+        Ecrire("La date 1 (", date1_jour, "/", date1_mois, "/", date1_annee, ") est plus ancienne que la date 2 (", date2_jour, "/", date2_mois, "/", date2_annee, ")" !)
+   	Sinon
+       	Ecrire("La date 2 (", date2_jour, "/", date2_mois, "/", date2_annee, ") est plus ancienne que la date 1 (", date1_jour, "/", date1_mois, "/", date1_annee, ")" !)
+ 	FinSi

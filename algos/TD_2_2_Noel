@@ -1,0 +1,41 @@
+Algorithme TD_2_2_Noel
+Variables:
+    annee, nbrBissextile, decalage : entier
+Instructions:
+	//On sait que tous les années non bissextile, les jours de la semaine sont décalés de 365%7=1 jour
+	//On sait que tous les années bissextile, les jours de la semaine sont décalés de 366%7=2 jour (1 jour jusqu'au 29, puis 2)
+	//Il suffit donc de compter le nombre d'année depuis 1900 (mardi), jusqu'à année demandé, en comptant l'année demandé mais pas 1900
+	
+	//D'après wikipedia une année bissextile est 
+	// - soit divisibles par 4 mais non divisibles par 100 ;
+	// - soit divisibles par 400
+    //Ce qu'on peut traduir par
+	//	nbrBissextile = (Nbr année divisible par 4) - (nombre d'année divisible 100) + (nombre d'année divisible par 400)
+    Ecrire("Donnez une année (4 chiffes)"!)
+    Lire(clavier ! annee)
+    annee <- annee - 1900
+    // Pour le calcul suivant, afin de savoir si une année était divisible par 400, il faut ajouter 300, 1900%400=300
+    nbrBissextile <- E(annee/4) - E((annee)/100) + E((annee+300)/400)
+    decalage <- (nbrBissextile*2 + (annee - nbrBissextile)*1) % 7
+    
+	//Cette solution marche aussi avant 1900 même si l'énoncé ne le demandait pas, il donne juste un décalage négatif
+    Si decalage < 0 Alors
+    	decalage <- decalage + 7
+    FinSi
+    
+    //Sortie
+    Si decalage = 0 Alors
+    	ecrire("Le noël de ", (annee + 1900), " était un mardi" !)
+    SinonSi decalage = 1 Alors
+    	ecrire("Le noël de ", (annee + 1900), " est un mercredi" !)
+    SinonSi decalage = 2 Alors
+    	ecrire("Le noël de ", (annee + 1900), " est un jeudi" !)
+    SinonSi decalage = 3 Alors
+    	ecrire("Le noël de ", (annee + 1900), " est un vendredi" !)
+    SinonSi decalage = 4 Alors
+    	ecrire("Le noël de ", (annee + 1900), " est un samedi" !)
+    SinonSi decalage = 5 Alors
+    	ecrire("Le noël de ", (annee + 1900), " est un dimanche" !)
+    SinonSi decalage = 6 Alors
+    	ecrire("Le noël de ", (annee + 1900), " est un lundi" !)
+    FinSi
