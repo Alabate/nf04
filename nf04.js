@@ -34,7 +34,7 @@ $(function () {
 			this.varsValues = [];
 			this.varsLastValues = [];
 			this.line = 0;
-			this.traceCount = 0;
+			this.instructionsCount = 0;
 			this.traceScreenLine = -1;
 			this.tooltipMsgs = [];
 			this.inputSubmited = false;
@@ -54,6 +54,8 @@ $(function () {
 				theme: 'pastel-on-dark',
 				gutters: ['CodeMirror-linenumbers', 'errorMark', 'actualLineMark']
 			});
+			//hide old tooltips
+			$('[rel=tooltip]').tooltip('hide');
 
 		};
 		// and init !
@@ -62,6 +64,7 @@ $(function () {
 		//Update all tooltips
 		this.updateTooltips = function()
 		{
+			$('[rel=tooltip]').tooltip('hide');
 			var editor = this.editor;
 			$.each(this.tooltipMsgs,function(index, value){
 				editor.addLineClass(index, 'wrap', 'tooltip-msg tooltip-msg-' + index);
@@ -754,7 +757,7 @@ $(function () {
 			}
 			if(instruction === undefined)
 			{
-				$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : L\'algorithme s\'est terminé correctement</li>');
+				$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : L\'algorithme s\'est terminé correctement en <strong>' + this.instructionsCount + '</strong> instructions.</li>');
 				this.line = -1;
 				this.setActualLine(-1);
 				this.disableEditor(false);
@@ -989,10 +992,10 @@ $(function () {
 						}
 						if(this.inputValue === '' && !this.inputCreated)
 						{
-							$('#sortie').append('<li class="list-group-item"><div class="input-group"><input type="text" class="form-control input-l'+this.line+' input-submit"/> '
+							$('#sortie').append('<li class="list-group-item"><div class="input-group"><input type="text" class="form-control input-l'+this.instructionsCount+' input-submit"/> '
 								+ '<span class="input-group-btn"><button class="btn btn-default btn-submit" type="button">Envoyer !</button></span></div></li>');
 							this.inputCreated = true;
-							$('#sortie').find('.input-l' + this.line)[0].focus();
+							$('#sortie').find('.input-l' + this.instructionsCount)[0].focus();
 							return false;
 						}
 						if(this.inputValue !== '' && !this.inputCreated) {
@@ -1149,7 +1152,6 @@ $(function () {
 									found = true;
 									this.addTraceColumn(this.line);
 									this.line = i;
-									console.log("bob")
 									dontTrace = true;
 									break;
 								}
@@ -1387,7 +1389,7 @@ $(function () {
 						return false;
 					}
 
-					console.log(dontTrace);
+
 					if(!dontTrace)
 					{
 						var traceEndLine = this.addTraceColumn(this.line);
@@ -1407,6 +1409,7 @@ $(function () {
 							keyboardInput = '';
 						}
 					}
+					this.instructionsCount ++;
 				}
 
 				//if unset this.mode (this.mode=1)
@@ -1474,9 +1477,9 @@ $(function () {
 		{
 			if(this.inputCreated && !this.inputSubmited)
 			{
-				$('#sortie').find('.input-l' + this.line).attr('disabled','disabled');
-				$('#sortie').find('.input-l' + this.line).parent().find('button').attr('disabled','disabled');
-				this.inputValue = $('#sortie').find('.input-l' + this.line)[0].value;
+				$('#sortie').find('.input-l' + this.instructionsCount).attr('disabled','disabled');
+				$('#sortie').find('.input-l' + this.instructionsCount).parent().find('button').attr('disabled','disabled');
+				this.inputValue = $('#sortie').find('.input-l' + this.instructionsCount)[0].value;
 				this.inputCreated = true;
 				this.inputSubmited = true;
 				this.nextLine();
