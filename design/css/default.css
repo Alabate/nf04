@@ -51,8 +51,6 @@
 	padding-bottom: 0;
 	line-height: 28px;
 	outline: 0;
-	/*color:#fff;*/
-
 	text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.25);
 	color: #428BCA;
 	border:0;
@@ -95,4 +93,63 @@
 .tooltip.top .tooltip-arrow {
 	border-top-color: #fff;
 	bottom:1px;
+}
+
+
+
+@media (max-width: 768px) {
+	.control-bar .navbar-nav{
+		float: left;
+		margin: 0px;
+		padding-left: 0px;
+	}
+	.control-bar .navbar-right{
+		float:right;
+	}
+	.control-bar .navbar-nav > li{
+		float:left;
+		display: block;
+	}
+	.control-bar{
+	    line-height: 0; 
+	    font-size: 0;
+	    color: transparent; 
+	}
+	.control-bar .navbar-nav > li > button.link, .control-bar .navbar-nav > li > a{
+		padding:0 10px;
+	}
+
+
+	.navbar-nav .open .dropdown-menu{
+		position: absolute;
+		z-index: 1000;
+		float: left;
+		min-width: 160px;
+		padding: 5px 0px;
+		margin: 2px 0px 0px;
+		list-style: none outside none;
+		font-size: 14px;
+		background-color: #FFF;
+		border: 1px solid rgba(0, 0, 0, 0.15);
+		box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.176);
+		background-clip: padding-box;
+	    top: auto;
+	    bottom: 100%;
+	    margin-bottom: 1px;
+	    left:auto;
+	    right:0;
+	}
+
+}
+@media (min-width: 768px) and (max-width: 991px) {
+	.control-bar{
+		font-size:13px;
+	}
+	.control-bar .navbar-nav > li > button.link, .control-bar .navbar-nav > li > a{
+		padding:0 10px;
+	}
+	.control-bar .navbar-nav > li > button.link > .glyphicon, .control-bar .navbar-nav > li > a > .glyphicon{
+		font-size:10px;
+	}
+
 }

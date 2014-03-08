@@ -19,6 +19,7 @@ $(function () {
 	//interpreter object
 	function NF04()
 	{
+		this.speedMode = false;
 		this.init = function()
 		{
 			//(re)init buttons
@@ -114,6 +115,7 @@ $(function () {
 			//Set tooltip
 			this.tooltipMsgs[line] = message;
 			this.updateTooltips();
+			this.scrollToLastLine();
 		};
 
 		this.setActualLine = function(line)
@@ -760,6 +762,7 @@ $(function () {
 			if(instruction === undefined)
 			{
 				$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : L\'algorithme s\'est terminé correctement en <strong>' + this.instructionsCount + '</strong> instructions.</li>');
+				this.scrollToLastLine();
 				this.line = -1;
 				this.setActualLine(-1);
 				this.disableEditor(false);
@@ -800,6 +803,7 @@ $(function () {
 					if(matches !== null){
 						this.mode++;
 						$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;') + '</strong></li>');
+						this.scrollToLastLine();
 					}
 					else
 					{
@@ -966,14 +970,7 @@ $(function () {
 						$('#sortie').append('<li class="list-group-item">' + screenOutput + '</li>');
 
 						//scroll to the message
-						//If the element is below the screen
-						if($('html, body').scrollTop() < ($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30))){
-							$('html, body').scrollTop($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30));
-						}
-						//else if the element is above
-						else if($('html, body').scrollTop() > $('#sortie').children('li').last().offset().top){
-							$('html, body').scrollTop($('#sortie').children('li').last().offset().top);
-						}
+						this.scrollToLastLine();
 					
 					}
 					else if((matches = instruction.match(/^lire\s*\(\s*(.+)\s*!\s*([a-z0-9_]+)\s*\)$/i)) !== null) // Lire(<source> ! <sortie>)
@@ -997,6 +994,7 @@ $(function () {
 							$('#sortie').append('<li class="list-group-item"><div class="input-group"><input type="text" class="form-control input-l'+this.instructionsCount+' input-submit"/> '
 								+ '<span class="input-group-btn"><button class="btn btn-default btn-submit" type="button">Envoyer !</button></span></div></li>');
 							this.inputCreated = true;
+							this.scrollToLastLine();
 							$('#sortie').find('.input-l' + this.instructionsCount)[0].focus();
 							return false;
 						}
@@ -1427,6 +1425,8 @@ $(function () {
 			if(this.loopMode){
 				setTimeout(function(){that.nextLine();}, 0);
 			}
+
+			return true;
 		};
 
 
@@ -1462,6 +1462,18 @@ $(function () {
 			return traceEndLine;
 		};
 
+		this.scrollToLastLine = function()
+		{
+			//If the element is below the screen
+			if($('html, body').scrollTop() < ($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30))){
+				$('html, body').scrollTop($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30));
+			}
+			//else if the element is above
+			else if($('html, body').scrollTop() > $('#sortie').children('li').last().offset().top){
+				$('html, body').scrollTop($('#sortie').children('li').last().offset().top);
+			}
+		};
+
 		//execute until the end
 		this.start = function()
 		{
@@ -1471,8 +1483,22 @@ $(function () {
 			$('.btn-start').removeClass('btn-start');
 			$('.btn-next').attr('disabled','disabled');
 			//Start interpreter
-			this.loopMode = true;
-			this.nextLine();
+			if(this.speedMode)
+			{
+				this.loopMode = false;
+				while(true)
+				{
+					if(!this.nextLine())
+					{
+						break;
+					}
+				}
+			}
+			else
+			{
+				this.loopMode = true;
+				this.nextLine();
+			}
 		};
 
 		this.submit = function()
@@ -1484,7 +1510,7 @@ $(function () {
 				this.inputValue = $('#sortie').find('.input-l' + this.instructionsCount)[0].value;
 				this.inputCreated = true;
 				this.inputSubmited = true;
-				this.nextLine();
+				this.start();
 			}
 		};
 
@@ -1558,7 +1584,8 @@ $(function () {
 
 
 	$('#openModal').on('change','#openFile', function(){
-		$('#openModal').find('.btn-submit-open').tooltip('hide');
+		$('[rel=tooltip]').tooltip('hide');
+		$('.tooltip').css('display', 'none');
 	});
 
 	$('#openModal').on('click','.btn-submit-open', function(){
@@ -1602,11 +1629,36 @@ $(function () {
 		reader.readAsText($('#openModal').find('#openFile')[0].files[0], 'UTF-8');
 	});
 
+
+	$('.control-bar').on('click','.btn-speedmode', function(){
+		if(nf04.speedMode)
+		{
+			nf04.speedMode = false;
+			$('.btn-speedmode').children('span').addClass('glyphicon-unchecked');
+			$('.btn-speedmode').children('span').removeClass('glyphicon-check');
+			$('.btn-speedmode').parent().parent().parent().children('.dropdown-toggle').dropdown('toggle');
+			return false;
+		}
+		return true;
+	});
+
+	$('#speedmodeModal').on('click','.btn-submit-speedmode', function(){
+		$('#speedmodeModal').modal('hide');
+		nf04.reset();
+		nf04.speedMode = true;
+		$('.btn-speedmode').children('span').addClass('glyphicon-check');
+		$('.btn-speedmode').children('span').removeClass('glyphicon-unchecked');
+	});
+
+	$('#bugModal').on('click','.btn-submit-bug', function(){
+		window.open('https://github.com/ALabate/nf04/issues/new?body=Un%20probl%C3%A8me%20a%20%C3%A9t%C3%A9%20trouv%C3%A9.%0A%3C!--%20Merci%20de%20pr%C3%A9ciser%20!%20--%3E%0A%0ACode%20source%20ayant%20cr%C3%A9%C3%A9%20le%20bug%20:%0A%60%60%60%0A'+ encodeURIComponent(nf04.editor.getDoc().getValue()) + '%0A%60%60%60%0A');
+	});
+
 	$('.control-bar').on('click','.btn-save', function(){
 		var link = document.createElement('a');
 	    link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(nf04.editor.getDoc().getValue()));
-	    link.setAttribute('download', "algo.nf04");
-	    document.body.appendChild(link)
+	    link.setAttribute('download', 'algo.nf04');
+	    document.body.appendChild(link);
 	    link.click();
 	    link.remove();
 	});
