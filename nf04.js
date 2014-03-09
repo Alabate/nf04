@@ -52,7 +52,7 @@ $(function () {
 				lineNumbers: true,
 				styleActiveLine: true,
 				matchBrackets: true,
-				theme: 'pastel-on-dark',
+				theme: 'nf04style',
 				gutters: ['CodeMirror-linenumbers', 'errorMark', 'actualLineMark']
 			});
 			//hide old tooltips
@@ -799,7 +799,7 @@ $(function () {
 				//Wait for "Algorithme <Nom>"
 				if(this.mode === 0)
 				{
-					matches = /^Algorithme\s+([^ "']+)$/i.exec(instruction);
+					matches = /^Algorithme\s+([^\s"']+)$/i.exec(instruction);
 					if(matches !== null){
 						this.mode++;
 						$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;') + '</strong></li>');
@@ -813,24 +813,24 @@ $(function () {
 				}
 
 				//Wait for "Types:" or "Variables:" or "Instructions:"
-				else if(instruction.toLowerCase() == 'types:' || instruction.toLowerCase() == 'variables:' || instruction.toLowerCase() == 'instructions:')
+				else if(instruction.match(/^(types|variables|instructions)\s*:$/i))
 				{
 					switch(this.mode) //this.mode cannot decrement, but it can jump one or two this.mode
 					{
 						case 1:
-							if(instruction.toLowerCase() == 'types:'){
+							if(instruction.match(/^types\s*:$/i)) {
 								this.mode = 2;
 								break;
 							}
 							/* falls through */
 						case 2:
-							if(instruction.toLowerCase() == 'variables:'){
+							if(instruction.match(/^variables\s*:$/i)) {
 								this.mode = 3;
 								break;
 							}
 							/* falls through */
 						case 3:
-							if(instruction.toLowerCase() == 'instructions:'){
+							if(instruction.match(/^instructions\s*:$/i)){
 								this.mode = 4;
 								break;
 							}
