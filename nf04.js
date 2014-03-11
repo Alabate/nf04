@@ -2,33 +2,321 @@
 //This declares to JSHint that $ and codemirror are global variable, and the false indicates that it should not be overridden.
 	/* global $:false, CodeMirror:false */
 $(function () {
-	//init control bar button - Check for the various File API support.
-	if (window.File && window.FileReader)
-	{
-		$('.btn-open').parent().removeClass('disabled');
-	}
-	else
-	{
-		$('.btn-open').tooltip({
-			'html':true,
-			'title': 'Votre navigateur n\'est pas compatible avec cette option. <br/>Mettez-le à jour ou utilisez en un autre !',
-			'container': 'body'
-		});
-	}
 
-	//interpreter object
-	function NF04()
+	/**
+	 * Class that deal with the user interface
+	 * @constructor
+	 */
+	function UI()
 	{
-		this.speedMode = false;
+		this.firstInit = false;
+		this.editor = null;
+		this.tooltipMsgs = [];
+
+		/**
+		 * Disable or enable buttons with the class that start with `btn-`.
+		 * @param {string} button       - Class name of the button without `btn-` 
+		 * @param {bool} [disable=true] - `true` to enable the button and `false` to disable it. 
+		 */
+		this.disableBtn = function(button, disable)
+		{
+			disable = (disable !== undefined )? disable : true;
+			if(disable) {
+				$('a.btn-' + button).parent().addClass('disabled');
+				$('button.btn-' + button).attr('disabled', 'disable');
+			}
+			else {
+				$('a.btn-' + button).parent().removeClass('disabled');
+				$('button.btn-' + button).removeAttr('disabled');
+			}
+		};
+
+		/**
+		 * Replace the *Start* button with *Pause* or *Pause* with *Start*
+		 * @param {bool} [show=true] - `true` to show the *Pause* button and `false` show *Start* button. 
+		 */
+		this.showPauseBtn = function(show)
+		{
+			show = (show !== undefined )? show : true;
+			if(show)
+			{
+				$('.btn-start').addClass('btn-pause');
+				$('.btn-start').html('<span class="glyphicon glyphicon-pause"></span> Pause');
+				$('.btn-start').removeClass('btn-start');
+			}
+			else
+			{
+				$('.btn-pause').addClass('btn-start');
+				$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer');
+				$('.btn-pause').removeClass('btn-pause');
+			}
+		};
+
+
+
+		/**
+		 * Set the editor in read mode and change to the read style
+		 * @param {bool} [disable=true] - `true` to disable the editor, `false` to enable it
+		 */
+		this.disableEditor = function(disable)
+		{
+			disable = (disable !== undefined )? disable : true;
+			if(disable)
+			{
+				$('.CodeMirror').css('background-color', '#515151');
+				$('.CodeMirror-gutters').css('background-color', '#5a5a5a');
+				this.editor.setOption('readOnly', true);
+			}
+			else
+			{
+				$('.CodeMirror').css('background-color', '#2c2827');
+				$('.CodeMirror-gutters').css('background-color', '#34302f');
+				this.editor.setOption('readOnly', false);
+			}
+		};
+
+		/**
+		 * DEPRECATED Remove error/warning tooltips and add new from the `messages` array
+		 * @param {(string[line]|bool)} [messages=false] - List of all messages indexed by line number. If `false` (default), this function only hide old tooltips.
+		 */
+		this.updateTooltips = function(messages)
+		{
+			messages = (messages !== undefined )? messages : false;
+			$('.tooltip').css('display', 'none');
+			if(messages !== false && messages.length >= 1)
+			{
+				var editor = this.editor;
+				$.each(messages,function(line, msg)
+				{
+					editor.addLineClass(line, 'wrap', 'tooltip-msg tooltip-msg-' + line);
+					$('.tooltip-msg-' + line).tooltip({
+						'html': true,
+						'title': msg,
+						'container': 'body'
+					});
+				});
+			}
+		};
+
+		/**
+		 * Add a new tooltip
+		 * @param {int} line - The line that will be tooltiped
+		 * @param {string} message - The html content of the tooltip
+		 */
+		this.addTooltip = function(line, message)
+		{
+			this.tooltipMsgs[line] = message;
+			this.editor.addLineClass(line, 'wrap', 'tooltip-msg tooltip-msg-' + line);
+			$('.tooltip-msg-' + line).tooltip({
+				'html': true,
+				'title': message,
+				'container': 'body'
+			});
+		};
+
+		/**
+		 * remove all tooltips
+		 */
+		this.removeTooltips = function()
+		{
+
+			for (var i = 0; i < this.editor.lineCount(); i++) {
+				$('.tooltip-msg-' + i).tooltip('destroy');
+				this.editor.removeLineClass(i, 'wrap', 'tooltip-msg tooltip-msg-' + i);
+			}
+
+			this.tooltipMsgs = [];
+		};
+
+
+		/**
+		 * Add a html content in a list element at the end of the output list
+		 * @param {string} content - Html content of the list element
+		 * @param {string} [style=default] - Bootstrap style of the list element (default|primary|success|info|warning|danger)
+		 */
+		this.addToOutput = function(content, style)
+		{
+			style = (style !== undefined )? style : 'default';
+			if(style == 'default') {
+				style = '';
+			}
+			else {
+				style = 'list-group-item-' + style;
+			}
+			$('#sortie').append('<li class="list-group-item ' + style + '">' + content + '</li>');
+		};
+
+		/**
+		 * Scroll to the last line of the output (smart scroll like scroll after a focus on an input) 
+		 */
+		this.scrollToOutput = function()
+		{
+			//If the element is below the screen
+			if($('html, body').scrollTop() < ($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30))){
+				$('html, body').scrollTop($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30));
+			}
+			//else if the element is above
+			else if($('html, body').scrollTop() > $('#sortie').children('li').last().offset().top){
+				$('html, body').scrollTop($('#sortie').children('li').last().offset().top);
+			}
+		};
+
+
+		/**
+		 * Scroll the editor to the line (smart scroll like scroll after a focus on an input)
+		 * @param {int} line - The to scroll to
+		 */
+		this.scrollEditorCurrent = function(line)
+		{
+			var elementHeight = Math.round($('.CodeMirror-vscrollbar').children('div').height() / this.editor.lineCount());
+			//If the element is below the view
+			if($('.CodeMirror-vscrollbar').scrollTop() < (elementHeight*(line+1) - $('.CodeMirror').height() + 5)) {
+				$('.CodeMirror-vscrollbar').scrollTop(elementHeight*(line+1) - $('.CodeMirror').height() + 5);
+			}
+			//else if the element is above
+			else if($('.CodeMirror-vscrollbar').scrollTop() > elementHeight*line ) {
+				$('.CodeMirror-vscrollbar').scrollTop(elementHeight*line);
+			}
+		};
+
+		/**
+		 * Get the content of an editor line
+		 * @param {int} line - line source
+		 * @return {string} - the content of the line
+		 */
+		this.getLine = function(line)
+		{
+			return this.editor.getLine(line);
+		};
+
+
+		/**
+		 * Add a marker and a background to the line
+		 * @param {int} line - The line..
+		 * @param {string} markerType - Can be `warning`, `danger`, `current` (current line style)
+		 */
+		this.addMarker = function(line, markerType)
+		{
+			//Remove other backgrounds
+			this.editor.removeLineClass(line, 'background', 'bg-warning');
+			this.editor.removeLineClass(line, 'background', 'bg-danger');
+			this.editor.removeLineClass(line, 'background', 'bg-current');
+
+			//Set error background and add marker
+			this.editor.addLineClass(line, 'background', 'bg-' + markerType);
+			var marker = document.createElement('div');
+			marker.className += ' marker-' + markerType;
+			if(markerType == 'current')
+			{
+				marker.innerHTML = '>';
+				this.editor.setGutterMarker(line, 'currentLine', marker);
+			}
+			else
+			{
+				marker.innerHTML = '●';
+				this.editor.setGutterMarker(line, 'error', marker);
+			}
+		}
+
+
+		/**
+		 * Remove all marker of a type
+		 * @param {string} [markerType=false] - the type of marker (`warning`, `danger`, `current`) that will be removed. If false, then all marker will be removed
+		 */
+		this.removeMarker = function(markerType)
+		{
+			markerType = (markerType !== undefined )? markerType : false;
+			//backgrounds
+			var i;
+			if(!markerType)
+			{
+				for (i = 0; i < this.editor.lineCount(); i++) {
+					this.editor.removeLineClass(i, 'background', 'bg-warning');
+					this.editor.removeLineClass(i, 'background', 'bg-danger');
+					this.editor.removeLineClass(i, 'background', 'bg-current');
+				}
+			}
+			else
+			{
+				for (i = 0; i < this.editor.lineCount(); i++) {
+					this.editor.removeLineClass(i, 'background', 'bg-' + markerType);
+				}
+			}
+
+			//marker
+			this.editor.clearGutter(markerType);
+		};
+
+
+		/**
+		 * reset user interface
+		 */
+		this.reinit = function()
+		{
+
+
+			//init control buttons
+			this.showPauseBtn(false);
+			this.disableBtn('start', false);
+			this.disableBtn('next', false);
+			this.disableBtn('reset', false);
+
+			//set trace and output divs
+			$('#sortie').html('');
+			$('#trace').html('<thead><tr><th>&nbsp;</th></tr></thead><tbody></tbody>');
+
+			//Hide all old tooltips
+			//this.updateTooltips()
+		};
+
+		/**
+		 * Init or reset user interface
+		 */
 		this.init = function()
 		{
-			//(re)init buttons
-			$('.btn-pause').addClass('btn-start');
-			$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer');
-			$('.btn-pause').removeClass('btn-pause');
-			$('.btn-next').removeAttr('disabled');
-			$('.btn-start').removeAttr('disabled');
+			//init open button that need recent browser 
+			if (window.File && window.FileReader) {
+				this.disableBtn('open');
+			}
+			else {
+				$('.btn-open').tooltip({
+					'html':true,
+					'title': 'Votre navigateur n\'est pas compatible avec cette option. <br/>Mettez-le à jour ou utilisez en un autre !',
+					'container': 'body'
+				});
+			}
+		
+			//Setup editor
+			this.editor = CodeMirror.fromTextArea(document.getElementById('code'),
+			{
+				lineNumbers: true,
+				styleActiveLine: true,
+				matchBrackets: true,
+				theme: 'nf04style',
+				gutters: ['CodeMirror-linenumbers', 'error', 'currentLine']
+			});
+			this.reinit();
+		};
+
+		this.init();
+	}
+
+
+
+
+	/**
+	 * Class that interpret the code
+	 * @param {UI} ui - instance of the ui class
+	 * @constructor
+	 */
+	function NF04(ui)
+	{
+		this.speedMode = false;
+		this.ui = ui;
+		this.init = function()
+		{
 			//init vars
+
 			this.mode = 0;
 			this.varsTypes = [];
 			this.varsNames = [];
@@ -43,112 +331,69 @@ $(function () {
 			this.inputValue = '';
 			this.loopMode = false;
 			this.controlFlow = [];
-			//set trace and output
-			$('#sortie').html('');
-			$('#trace').html('<thead><tr><th>&nbsp;</th></tr></thead><tbody></tbody>');
-			//Setup editor
-			this.editor = CodeMirror.fromTextArea(document.getElementById('code'),
-			{
-				lineNumbers: true,
-				styleActiveLine: true,
-				matchBrackets: true,
-				theme: 'nf04style',
-				gutters: ['CodeMirror-linenumbers', 'errorMark', 'actualLineMark']
-			});
-			//hide old tooltips
-			$('[rel=tooltip]').tooltip('hide');
-			$('.tooltip').css('display', 'none');
 
 		};
 		// and init !
 		this.init();
 
-		//Update all tooltips
-		this.updateTooltips = function()
-		{
-			$('[rel=tooltip]').tooltip('hide');
-			$('.tooltip').css('display', 'none');
-			var editor = this.editor;
-			$.each(this.tooltipMsgs,function(index, value){
-				editor.addLineClass(index, 'wrap', 'tooltip-msg tooltip-msg-' + index);
-				$( '.tooltip-msg-' + index ).tooltip({
-					'html':true,
-					'title':value,
-					'container': 'body'
-				});
-			});
-		};
-		//add error mark on editor
-		this.addError = function(line, message, isWarning)
-		{
-			isWarning = (typeof isWarning !== 'undefined' )? isWarning : false;
-			
-			//add colored disc next to the line number
-			var marker = document.createElement('div');
-			marker.innerHTML = '●';
-			if(isWarning)
-			{
-				marker.style.color = 'orange';
-				this.editor.addLineClass(line, 'background', 'warningBg');
-				$('#sortie').append('<li class="list-group-item list-group-item-warning"><u>Ligne ' + (line+1) + '</u> : ' + message + '</li>');
 
+		/**
+		 * Tell to the user that there is an execution error and put the interpreter in error mode (this.line = -1)
+		 * @param {string} message - The error message (html)
+		 * @param {int} [line=false] - The line of the error. If `false` the current line will be used. If `-1`, no line will be writed, only a message in ouptut.
+		 */
+		this.addError = function(message, line)
+		{
+			line = (typeof line !== 'undefined' )? line : false;
+			if(line === false) {
+				line = this.line;
 			}
-			else
-			{
-				this.editor.removeLineClass(line, 'background', 'warningBg');
-				marker.style.color = 'red';
-				this.editor.addLineClass(line, 'background', 'errorBg');
-				$('#sortie').append('<li class="list-group-item list-group-item-danger"><u>Ligne ' + (line+1) + '</u> : ' + message + '</li>');
-				//stop ui except reset button
-				this.editor.removeLineClass(line, 'background', 'actualLine');
-				this.line = -1;
-				this.loopMode = false;
-				$('.btn-start').attr('disabled','disabled');
-				$('.btn-pause').attr('disabled','disabled');
-				$('.btn-next').attr('disabled','disabled');
-				$('.btn-submit').attr('disabled','disabled');
 
-				this.disableEditor(false);
+			//Add style
+			if(line != -1) {
+				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'danger')
+				this.ui.addMarker(line, 'error');
+				this.ui.addTooltip(line, message);
 			}
-			this.editor.setGutterMarker(line, 'errorMark', marker);
-			
-			//Set tooltip
-			this.tooltipMsgs[line] = message;
-			this.updateTooltips();
-			this.scrollToLastLine();
+			else {
+				this.ui.addToOutput(message, 'danger');
+			}
+			this.ui.scrollToOutput();
+
+			//Disable all buttons and editor
+			this.ui.disableBtn('start');
+			this.ui.disableBtn('pause');
+			this.ui.disableBtn('next');
+			this.ui.disableBtn('submit');
+			this.ui.disableEditor();
+
+			//Stop interpreter
+			this.line = -1;
 		};
 
-		this.setActualLine = function(line)
+
+		/**
+		 * Tell to the user that there is an execution warning
+		 * @param {string} message - The error message (html)
+		 * @param {int} [line=false] - The line of the error. If `false` the current line will be used. If `-1`, no line will be writed, only a message in ouptut.
+		 */
+		this.addWarning = function(message, line)
 		{
-			//Remove old actual line
-			for (var j = 0; j < this.editor.lineCount() ; j++)
-			{
-				this.editor.removeLineClass(j, 'background', 'actualLine');
-			}
-			this.editor.clearGutter('actualLineMark');
-
-			//set Actual line style
-			if(line != -1)
-			{
-				this.editor.addLineClass(line, 'background', 'actualLine');
-
-				var marker = document.createElement('div');
-				marker.innerHTML = '>';
-				marker.style.color = '#6faedf';
-				this.editor.setGutterMarker(line, 'actualLineMark', marker);
-				//scroll
-				var elementHeight = Math.round($('.CodeMirror-vscrollbar').children('div').height() / this.editor.lineCount());
-				//If the element is below the view
-				if($('.CodeMirror-vscrollbar').scrollTop() < (elementHeight*(line+1) - $('.CodeMirror').height() + 5)) {
-					$('.CodeMirror-vscrollbar').scrollTop(elementHeight*(line+1) - $('.CodeMirror').height() + 5);
-				}
-				//else if the element is above
-				else if($('.CodeMirror-vscrollbar').scrollTop() > elementHeight*line ) {
-					$('.CodeMirror-vscrollbar').scrollTop(elementHeight*line);
-				}
+			line = (typeof line !== 'undefined' )? line : false;
+			if(line === false) {
+				line = this.line;
 			}
 
-			this.updateTooltips();
+			//Add style
+			if(line != -1) {
+				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'warning')
+				this.ui.addMarker(line, 'warning');
+				this.ui.addTooltip(line, message);
+			}
+			else {
+				this.ui.addToOutput(message, 'warning');
+			}
+			this.ui.scrollToOutput();
 		};
 
 
@@ -288,7 +533,7 @@ $(function () {
 				}
 				else
 				{
-					this.addError(this.line, 'Expression source du problème : <strong>' + oldExpressionString + '</strong>. <br/> Transformé en <strong>' + this.expressionString(out) + '</strong>.');
+					this.addError('Expression source du problème : <strong>' + oldExpressionString + '</strong>. <br/> Transformé en <strong>' + this.expressionString(out) + '</strong>.');
 					return false;
 				}
 			}
@@ -309,7 +554,7 @@ $(function () {
 			var result = this.evaluateExpression(out);
 			if(!result)
 			{
-				this.addError(this.line, 'Expression source du problème : <strong>' + oldExpressionString + '</strong>. <br/> Transformé en <strong>' + this.expressionString(out) + '</strong>.');
+				this.addError('Expression source du problème : <strong>' + oldExpressionString + '</strong>. <br/> Transformé en <strong>' + this.expressionString(out) + '</strong>.');
 				return false;
 			}
 			return result;
@@ -332,7 +577,7 @@ $(function () {
 				out.value = matches[1].toLowerCase();
 				if(matches[1].toLowerCase() != 'e' && matches[1].toLowerCase() != 'non')
 				{
-					this.addError(this.line, 'La fonction ou le sous-algorithme <strong>' + matches[1] + '</strong> n\'existe pas.');
+					this.addError('La fonction ou le sous-algorithme <strong>' + matches[1] + '</strong> n\'existe pas.');
 					return false;
 				}
 			}
@@ -383,7 +628,7 @@ $(function () {
 			else if((matches = value.match(/^'(\\?[^']*)'$/i)) !== null) //Caractère
 			{
 				if(matches[1].length >= 2){
-					this.addError(this.line, 'La valeur <strong>' + value + '</strong> du type <strong>caractère</strong> contient plus d\'un caractère. Elle sera donc tronquée.',true);
+					this.addWarning('La valeur <strong>' + value + '</strong> du type <strong>caractère</strong> contient plus d\'un caractère. Elle sera donc tronquée.');
 				}
 				out.value = matches[1][0];
 				out.categorie = 'value';
@@ -400,7 +645,7 @@ $(function () {
 				//Get type
 				if(this.varsTypes[matches[1]] === undefined)
 				{
-					this.addError(this.line, 'La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
+					this.addError('La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
 					return false;
 				}
 				out.categorie = 'value';
@@ -409,7 +654,7 @@ $(function () {
 				//Get value
 				if(this.varsValues[matches[1]] === undefined)
 				{
-					this.addError(this.line, 'La variable <strong>' + matches[1] + '</strong> n\'a pas de valeur',true);
+					this.addWarning('La variable <strong>' + matches[1] + '</strong> n\'a pas de valeur');
 					//Set default value
 					if(this.varsTypes[matches[1]] == 'booléen'){
 						out.value = 'Faux';
@@ -424,7 +669,7 @@ $(function () {
 			}
 			else
 			{
-				this.addError(this.line, 'Je ne comprend pas la signification de cet enchainement de caractères : <strong>' + value + '</strong>.');
+				this.addError('Je ne comprend pas la signification de cet enchainement de caractères : <strong>' + value + '</strong>.');
 				return false;
 			}
 			return out;
@@ -489,12 +734,12 @@ $(function () {
 				//Check operator/value alternation
 				if(input[i].categorie == 'value' && lastType == 'value')
 				{
-					this.addError(this.line, 'J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux valeurs qui se suivent <strong>' + this.valueobjToString(input[i]) + '</strong> et <strong>' + this.valueobjToString(input[lastTypeI]) + '</strong> alors que toutes les valeurs doivent être séparés par un opérateur.');
+					this.addError('J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux valeurs qui se suivent <strong>' + this.valueobjToString(input[i]) + '</strong> et <strong>' + this.valueobjToString(input[lastTypeI]) + '</strong> alors que toutes les valeurs doivent être séparés par un opérateur.');
 					return false;
 				}
 				if(input[i].categorie == 'operator' && lastType == 'operator')
 				{
-					this.addError(this.line, 'J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux opérateurs qui se suivent <strong>' + this.valueobjToString(input[i]) + '</strong> et <strong>' + this.valueobjToString(input[lastTypeI]) + '</strong> alors que tous les opérateur doivent être séparés par une valeur.');
+					this.addError('J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux opérateurs qui se suivent <strong>' + this.valueobjToString(input[i]) + '</strong> et <strong>' + this.valueobjToString(input[lastTypeI]) + '</strong> alors que tous les opérateur doivent être séparés par une valeur.');
 					return false;
 				}
 				if(input[i].categorie == 'value' || input[i].categorie == 'operator')
@@ -521,7 +766,7 @@ $(function () {
 			//Check If there is a sign alone at the end -> error
 			if(input[input.length-1].categorie == 'operator')
 			{
-				this.addError(this.line, 'J\'ai trouvé un opérateur qui n\'avait pas de valeur à sa droite : <strong>' + input[input.length-1].value + '</strong>.');
+				this.addError('J\'ai trouvé un opérateur qui n\'avait pas de valeur à sa droite : <strong>' + input[input.length-1].value + '</strong>.');
 				return false;
 			}
 			//if founded one
@@ -548,7 +793,7 @@ $(function () {
 			{
 				if($.inArray(valueObj1.type, ['réel','entier']) == -1 || $.inArray(valueObj2.type, ['réel','entier'])  == -1)
 				{
-					this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+					this.addError('L\'opperation suivante a été faite : <br/><strong>'
 							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur ne supporte que les <strong>réels</strong> ou les <strong>entiers</strong>');
@@ -566,7 +811,7 @@ $(function () {
 			{
 				if(valueObj1.type != 'entier' || valueObj2.type != 'entier')
 				{
-					this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+					this.addError('L\'opperation suivante a été faite : <br/><strong>'
 							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur ne supporte que les <strong>entiers</strong>');
@@ -580,7 +825,7 @@ $(function () {
 				//If types are not same AND they are not both (réel or entier)
 				if(valueObj1.type != valueObj2.type && ($.inArray(valueObj1.type, ['réel','entier']) == -1 || $.inArray(valueObj2.type, ['réel','entier'])  == -1))
 				{
-					this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+					this.addError('L\'opperation suivante a été faite : <br/><strong>'
 							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur ne comparer que des éléments du même type (exception faite pour les réels et les entiers qui peuvent être comparés)');
@@ -593,7 +838,7 @@ $(function () {
 			{
 				if($.inArray(valueObj1.type, ['booléen']) == -1 || $.inArray(valueObj2.type, ['booléen'])  == -1)
 				{
-					this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+					this.addError('L\'opperation suivante a été faite : <br/><strong>'
 							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur ne supporte que les <strong>booléen</strong>');
@@ -604,7 +849,7 @@ $(function () {
 			}
 			else
 			{
-				this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+				this.addError('L\'opperation suivante a été faite : <br/><strong>'
 						+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 						+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 						+ 'Or cet opérateur n\'existe pas.');
@@ -625,14 +870,14 @@ $(function () {
 					break;
 				case '/':
 					if(valueObj2.value === 0) {
-						this.addError(this.line, 'On t\'a jamais dit que c\'était interdit de diviser par 0 ?');
+						this.addError('On t\'a jamais dit que c\'était interdit de diviser par 0 ?');
 						return false;
 					}
 					out.value = valueObj1.value / valueObj2.value;
 					break;
 				case '%':
 					if(valueObj2.value === 0) {
-						this.addError(this.line, 'On t\'a jamais dit que c\'était interdit de diviser par 0 ?');
+						this.addError('On t\'a jamais dit que c\'était interdit de diviser par 0 ? (..Je sais, c\'est pas une division, sauf que c\'est le reste de la division, donc si on peut pas diviser, y\'a pas de reste)');
 						return false;
 					}
 					out.value = valueObj1.value % valueObj2.value;
@@ -662,7 +907,7 @@ $(function () {
 					out.value = valueObj1.value || valueObj2.value;
 					break;
 				default:
-					this.addError(this.line, 'L\'opperation suivante a été faite : <br/><strong>'
+					this.addError('L\'opperation suivante a été faite : <br/><strong>'
 							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur n\'existe pas.');
@@ -727,7 +972,7 @@ $(function () {
 					value = this.evaluateExpression(input);
 					if(value.type != 'réel')
 					{
-						this.addError(this.line, 'Vous ne pouvez pas utiliser la fonction <strong>E()</strong> sur une valeur de type <strong>' + value.type + '</strong>. Cette fonction n\'accepte que des <strong>réels</strong>');
+						this.addError('Vous ne pouvez pas utiliser la fonction <strong>E()</strong> sur une valeur de type <strong>' + value.type + '</strong>. Cette fonction n\'accepte que des <strong>réels</strong>');
 						return false;
 					}
 					value.value = Math.floor(value.value);
@@ -737,13 +982,13 @@ $(function () {
 					value = this.evaluateExpression(input);
 					if(value.type != 'booléen')
 					{
-						this.addError(this.line, 'Vous ne pouvez pas utiliser la fonction <strong>NON()</strong> sur une valeur de type <strong>' + value.type + '</strong>. Cette fonction n\'accepte que des <strong>booléens</strong>');
+						this.addError('Vous ne pouvez pas utiliser la fonction <strong>NON()</strong> sur une valeur de type <strong>' + value.type + '</strong>. Cette fonction n\'accepte que des <strong>booléens</strong>');
 						return false;
 					}
 					value.value = !(value.value);
 					return value;
 				default:
-					this.addError(this.line, 'La fonction <strong>' + funcName + '()</strong> n\'existe pas');
+					this.addError('La fonction <strong>' + funcName + '()</strong> n\'existe pas');
 					return false;
 			}
 		};
@@ -751,9 +996,9 @@ $(function () {
 		//Execute the next instruction
 		this.nextLine = function()
 		{
-			this.disableEditor(true);
+			this.ui.disableEditor();
 			//Get the line value and remove white spaces from start and end of the string
-			var instruction = this.editor.getLine(this.line);
+			var instruction = this.ui.getLine(this.line);
 			var that = this;
 			//if the algorithme reach the end
 			if(this.line == -1){
@@ -761,17 +1006,17 @@ $(function () {
 			}
 			if(instruction === undefined)
 			{
-				$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : L\'algorithme s\'est terminé correctement en <strong>' + this.instructionsCount + '</strong> instructions.</li>');
-				this.scrollToLastLine();
+				this.ui.addToOutput('<u>Ligne ' + (this.line+1) + '</u> : L\'algorithme s\'est terminé correctement en <strong>' + this.instructionsCount + '</strong> instructions.', 'success');
+				this.ui.scrollToOutput();
 				this.line = -1;
-				this.setActualLine(-1);
-				this.disableEditor(false);
-				this.loopMode = false;
 
-				$('.btn-start').attr('disabled','disabled');
-				$('.btn-pause').attr('disabled','disabled');
-				$('.btn-next').attr('disabled','disabled');
-				$('.btn-submit').attr('disabled','disabled');
+				this.ui.removeMarker('current');
+				this.ui.disableEditor(false);
+
+				this.ui.disableBtn('start');
+				this.ui.disableBtn('pause');
+				this.ui.disableBtn('next');
+				this.ui.disableBtn('submit');
 
 				//Reach the end without find all end of control flow instructions
 				if(this.controlFlow.length > 0 && this.controlFlow[this.controlFlow.length-1] !== undefined)
@@ -802,12 +1047,12 @@ $(function () {
 					matches = /^Algorithme\s+([^\s"']+)$/i.exec(instruction);
 					if(matches !== null){
 						this.mode++;
-						$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;') + '</strong></li>');
-						this.scrollToLastLine();
+						this.ui.addToOutput('<u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;') + '</strong>', 'success');
+						this.ui.scrollToOutput();
 					}
 					else
 					{
-						this.addError(this.line, 'L\'algorithme ne commence pas par <strong>Algorithme Nom_algorithme</strong>');
+						this.addError('L\'algorithme ne commence pas par <strong>Algorithme Nom_algorithme</strong>');
 						return false;
 					}
 				}
@@ -836,7 +1081,7 @@ $(function () {
 							}
 							/* falls through */
 						default:
-							this.addError(this.inputWait.line, 'Je m\'attendais à trouver <strong>Types:</strong>, <strong>Variables:</strong> ou <strong>Instructions:</strong> dans cet ordre mais ça n\'a pas été le cas');
+							this.addError('Je m\'attendais à trouver <strong>Types:</strong>, <strong>Variables:</strong> ou <strong>Instructions:</strong> dans cet ordre mais ça n\'a pas été le cas',this.inputWait.line);
 							return false;
 					}
 				}
@@ -844,7 +1089,7 @@ $(function () {
 				//if Types this.mode
 				else if(this.mode == 2)
 				{
-					this.addError(this.line, 'Je ne sais pas encore comment interpréter les types.. donc je vais les ignorer !',true);
+					this.addWarning('Je ne sais pas encore comment interpréter les types.. donc je vais les ignorer !');
 				}
 
 				//if Variables this.mode
@@ -879,7 +1124,7 @@ $(function () {
 								type = 'booléen';
 								break;
 							default:
-								this.addError(this.line, 'La type <strong>' + type + '</strong> n\'existe pas');
+								this.addError('La type <strong>' + type + '</strong> n\'existe pas');
 								return;
 						}
 
@@ -890,7 +1135,7 @@ $(function () {
 							vars[j] = vars[j].trim();
 							//Check if there is alway something between ","
 							if(vars[j] === '') {
-								this.addError(this.line, 'Apparement, il y a une virgule en trop !', true);
+								this.addError('Apparement, il y a une virgule en trop !', true);
 							}
 							else
 							{
@@ -901,17 +1146,18 @@ $(function () {
 									this.varsTypes[vars[j]] = type.toLowerCase();
 								}
 								else{
-									this.addError(this.line, 'La variable <strong>' + vars[j] + '</strong> a déjà été définie');
+									this.addError('La variable <strong>' + vars[j] + '</strong> a déjà été définie');
 									return;
 								}
 
 								//add to the trace table
+								//TODO ui
 								$('#trace').find('tbody').append('<tr><th>' + vars[j] + '</th></tr>');
 							}
 						}
 					}
 					else {
-						this.addError(this.line, 'Cette ligne doit être au format <strong>var1 : type</strong>');
+						this.addError('Cette ligne doit être au format <strong>var1 : type</strong>');
 					}
 
 				}
@@ -922,6 +1168,7 @@ $(function () {
 					//init screen & keyboard output
 					if(this.traceScreenLine == -1)
 					{
+						//TODO ui
 						$('#trace').find('tbody').append('<tr><th><em>Écran</em></th></tr>');
 						$('#trace').find('tbody').append('<tr><th><em>Clavier</em></th></tr>');
 						this.traceScreenLine = $('#trace').find('tbody').length-1;
@@ -938,7 +1185,7 @@ $(function () {
 						//Get type
 						if(this.varsTypes[matches[1]] === undefined)
 						{
-							this.addError(this.line, 'La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
+							this.addError('La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
 							return false;
 						}
 						type = this.varsTypes[matches[1]];
@@ -952,7 +1199,7 @@ $(function () {
 						//Check type
 						if(valueObj.type != type && !(valueObj.type == 'entier' && type == 'réel'))
 						{
-							this.addError(this.line, 'Vous ne pouvez pas assigner une valeur de type <strong>&lt;' + valueObj.type + '&gt;</strong> à une variable de type <strong>&lt;' + type + '&gt;</strong>.');
+							this.addError('Vous ne pouvez pas assigner une valeur de type <strong>&lt;' + valueObj.type + '&gt;</strong> à une variable de type <strong>&lt;' + type + '&gt;</strong>.');
 							return false;
 						}
 
@@ -967,6 +1214,7 @@ $(function () {
 						for (i = 0; i < params.length; i++) {
 							screenOutput += this.valueobjToString(this.executeExpression(params[i]),false);
 						}
+						//TODO ui
 						$('#sortie').append('<li class="list-group-item">' + screenOutput + '</li>');
 
 						//scroll to the message
@@ -979,18 +1227,19 @@ $(function () {
 						matches[1] = matches[1].trim();
 						if(matches[1].toLowerCase() != 'clavier')
 						{
-							this.addError(this.line, 'Je ne sais pas lire depuis <strong>' + matches[1] + '</strong>. Remplacez cette source par <strong>clavier</strong> si vous souhaitez que je récupère les touches du clavier.');
+							this.addError('Je ne sais pas lire depuis <strong>' + matches[1] + '</strong>. Remplacez cette source par <strong>clavier</strong> si vous souhaitez que je récupère les touches du clavier.');
 							return false;
 						}
 						//destination var
 						matches[2] = matches[2].trim();
 						if(this.varsTypes[matches[2]] === undefined)
 						{
-							this.addError(this.line, 'La variable <strong>' + matches[2] + '</strong> n\'est pas définie');
+							this.addError('La variable <strong>' + matches[2] + '</strong> n\'est pas définie');
 							return false;
 						}
 						if(this.inputValue === '' && !this.inputCreated)
 						{
+							//TODO ui
 							$('#sortie').append('<li class="list-group-item"><div class="input-group"><input type="text" class="form-control input-l'+this.instructionsCount+' input-submit"/> '
 								+ '<span class="input-group-btn"><button class="btn btn-default btn-submit" type="button">Envoyer !</button></span></div></li>');
 							this.inputCreated = true;
@@ -1019,7 +1268,7 @@ $(function () {
 									this.varsValues[matches[2]] = parseFloat(this.inputValue.replace(',','.'));
 									if(isNaN(this.varsValues[matches[2]]))
 									{
-										this.addError(this.line,'La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un réel');
+										this.addError('La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un réel');
 										return false;
 									}
 									this.inputValue = '';
@@ -1028,7 +1277,7 @@ $(function () {
 									this.varsValues[matches[2]] = parseInt(this.inputValue,10);
 									if(isNaN(this.varsValues[matches[2]]))
 									{
-										this.addError(this.line,'La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un entier');
+										this.addError('La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un entier');
 										return false;
 									}
 									this.inputValue = '';
@@ -1055,12 +1304,12 @@ $(function () {
 					{
 						if(this.controlFlow[this.controlFlow.length-1] === undefined)
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>Si</strong> correspondant à ce <strong>FinSi</strong>.');
+							this.addError('je ne trouve pas le <strong>Si</strong> correspondant à ce <strong>FinSi</strong>.');
 							return false;
 						}
 						else if(this.controlFlow[this.controlFlow.length-1].type != 'Si')
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>Si</strong> correspondant à ce <strong>FinSi</strong>. A la place je trouve un <strong>' + this.controlFlow[this.controlFlow.length-1].type + '</strong>');
+							this.addError('je ne trouve pas le <strong>Si</strong> correspondant à ce <strong>FinSi</strong>. A la place je trouve un <strong>' + this.controlFlow[this.controlFlow.length-1].type + '</strong>');
 							return false;
 						}
 						
@@ -1080,7 +1329,7 @@ $(function () {
 						}
 						if(!found)
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Si .. Alors</strong>');
+							this.addError('je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Si .. Alors</strong>');
 							return false;
 						}
 
@@ -1092,13 +1341,13 @@ $(function () {
 						matches[1] = matches[1].trim();
 						if(matches[1] === '')
 						{
-							this.addError(this.line, 'La condition du <strong>' + instruction + '</strong> est vide');
+							this.addError('La condition du <strong>' + instruction + '</strong> est vide');
 							return false;
 						}
 						condition = this.executeExpression(matches[1]);
 						if(condition.type != 'booléen')
 						{
-							this.addError(this.line, 'La condition du <strong>' + instruction + '</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + condition.type + '</strong>');
+							this.addError('La condition du <strong>' + instruction + '</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + condition.type + '</strong>');
 							return false;
 						}
 
@@ -1120,13 +1369,13 @@ $(function () {
 									matches[1] = matches[1].trim();
 									if(matches[1] === '')
 									{
-										this.addError(this.line, 'La condition du <strong>' + lineContent + '</strong> est vide');
+										this.addError('La condition du <strong>' + lineContent + '</strong> est vide');
 										return false;
 									}
 									condition = this.executeExpression(matches[1]);
 									if(condition.type != 'booléen')
 									{
-										this.addError(this.line, 'La condition du <strong>' + lineContent + '</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + condition.type + '</strong>');
+										this.addError('La condition du <strong>' + lineContent + '</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + condition.type + '</strong>');
 										return false;
 									}
 
@@ -1158,7 +1407,7 @@ $(function () {
 							}
 							if(!found)
 							{
-								this.addError(this.line, 'je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Si .. Alors</strong>');
+								this.addError('je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Si .. Alors</strong>');
 								return false;
 							}
 						}
@@ -1170,12 +1419,12 @@ $(function () {
 					{
 						if(this.controlFlow[this.controlFlow.length-1] === undefined)
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>Si</strong> correspondant à ce <strong>FinSi</strong>.');
+							this.addError('je ne trouve pas le <strong>Si</strong> correspondant à ce <strong>FinSi</strong>.');
 							return false;
 						}
 						else if(this.controlFlow[this.controlFlow.length-1].type != 'Si')
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>Si</strong> correspondant à ce <strong>FinSi</strong>. A la place je trouve un <strong>' + this.controlFlow[this.controlFlow.length-1].type + '</strong>');
+							this.addError('je ne trouve pas le <strong>Si</strong> correspondant à ce <strong>FinSi</strong>. A la place je trouve un <strong>' + this.controlFlow[this.controlFlow.length-1].type + '</strong>');
 							return false;
 						}
 						this.controlFlow.pop();
@@ -1192,51 +1441,51 @@ $(function () {
 
 						//Check var
 						if(this.varsTypes[forVar] === undefined) {
-							this.addError(this.line, 'La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
+							this.addError('La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
 							return false;
 						}
 						if(this.varsTypes[forVar] != 'entier') {
-							this.addError(this.line, 'La variable <strong>' + matches[1] + '</strong> devrait être de type <strong>entier</strong> pour être utilisé dans une boucle <strong>Pour</strong>');
+							this.addError('La variable <strong>' + matches[1] + '</strong> devrait être de type <strong>entier</strong> pour être utilisé dans une boucle <strong>Pour</strong>');
 							return false;
 						}
 
 						//Begin
 						matches[2] = matches[2].trim();
 						if(matches[2] === '') {
-							this.addError(this.line, 'La valeur initiale de la boucle <strong>Pour</strong> est vide');
+							this.addError('La valeur initiale de la boucle <strong>Pour</strong> est vide');
 							return false;
 						}
 						forBegin = this.executeExpression(matches[2]);
 						if(forBegin.type != 'entier') {
-							this.addError(this.line, 'La valeur initiale de la boucle <strong>Pour</strong> doit être un <strong>entier</strong> mais c\'est un <strong>' + forBegin.type + '</strong>');
+							this.addError('La valeur initiale de la boucle <strong>Pour</strong> doit être un <strong>entier</strong> mais c\'est un <strong>' + forBegin.type + '</strong>');
 							return false;
 						}
 
 						//End
 						matches[3] = matches[3].trim();
 						if(matches[3] === '') {
-							this.addError(this.line, 'La valeur finale de la boucle <strong>Pour</strong> est vide');
+							this.addError('La valeur finale de la boucle <strong>Pour</strong> est vide');
 							return false;
 						}
 						forEnd = this.executeExpression(matches[3]);
 						if(forEnd.type != 'entier') {
-							this.addError(this.line, 'La valeur finale de la boucle <strong>Pour</strong> doit être un <strong>entier</strong> mais c\'est un <strong>' + forEnd.type + '</strong>');
+							this.addError('La valeur finale de la boucle <strong>Pour</strong> doit être un <strong>entier</strong> mais c\'est un <strong>' + forEnd.type + '</strong>');
 							return false;
 						}
 
 						//Step
 						matches[4] = matches[4].trim();
 						if(matches[4] === '') {
-							this.addError(this.line, 'Le pas de la boucle <strong>Pour</strong> est vide');
+							this.addError('Le pas de la boucle <strong>Pour</strong> est vide');
 							return false;
 						}
 						forStep = this.executeExpression(matches[4]);
 						if(forStep.type != 'entier') {
-							this.addError(this.line, 'Le pas de la boucle <strong>Pour</strong> doit être un <strong>entier</strong> mais c\'est un <strong>' + forStep.type + '</strong>');
+							this.addError('Le pas de la boucle <strong>Pour</strong> doit être un <strong>entier</strong> mais c\'est un <strong>' + forStep.type + '</strong>');
 							return false;
 						}
 						if(forStep.value === 0) {
-							this.addError(this.line, 'Le pas de la boucle <strong>Pour</strong> ne peut valoir <strong>0</strong>');
+							this.addError('Le pas de la boucle <strong>Pour</strong> ne peut valoir <strong>0</strong>');
 							return false;
 						}
 
@@ -1260,7 +1509,7 @@ $(function () {
 							}
 							if(!found)
 							{
-								this.addError(this.line, 'je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Si .. Alors</strong>');
+								this.addError('je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Si .. Alors</strong>');
 								return false;
 							}
 						}
@@ -1282,12 +1531,12 @@ $(function () {
 					{
 						if(this.controlFlow[this.controlFlow.length-1] === undefined)
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>Pour</strong> correspondant à ce <strong>FinPour</strong>.');
+							this.addError('je ne trouve pas le <strong>Pour</strong> correspondant à ce <strong>FinPour</strong>.');
 							return false;
 						}
 						else if(this.controlFlow[this.controlFlow.length-1].type != 'Pour')
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>Pour</strong> correspondant à ce <strong>FinPour</strong>. A la place je trouve un <strong>' + this.controlFlow[this.controlFlow.length-1].type + '</strong>');
+							this.addError('je ne trouve pas le <strong>Pour</strong> correspondant à ce <strong>FinPour</strong>. A la place je trouve un <strong>' + this.controlFlow[this.controlFlow.length-1].type + '</strong>');
 							return false;
 						}
 
@@ -1314,12 +1563,12 @@ $(function () {
 						//check condition
 						matches[1] = matches[1].trim();
 						if(matches[1] === '') {
-							this.addError(this.line, 'La condition de la boucle <strong>Tant que</strong> est vide');
+							this.addError('La condition de la boucle <strong>Tant que</strong> est vide');
 							return false;
 						}
 						condition = this.executeExpression(matches[1]);
 						if(condition.type != 'booléen') {
-							this.addError(this.line, 'La condition de la boucle <strong>Tant que</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + cond.type + '</strong>');
+							this.addError('La condition de la boucle <strong>Tant que</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + cond.type + '</strong>');
 							return false;
 						}
 
@@ -1340,7 +1589,7 @@ $(function () {
 							}
 							if(!found)
 							{
-								this.addError(this.line, 'je ne trouve pas le <strong>Fintq</strong> correspondant à ce <strong>Tant que</strong>');
+								this.addError('je ne trouve pas le <strong>Fintq</strong> correspondant à ce <strong>Tant que</strong>');
 								return false;
 							}
 						}
@@ -1359,12 +1608,12 @@ $(function () {
 					{
 						if(this.controlFlow[this.controlFlow.length-1] === undefined)
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>Tant que</strong> correspondant à ce <strong>Fintq</strong>.');
+							this.addError('je ne trouve pas le <strong>Tant que</strong> correspondant à ce <strong>Fintq</strong>.');
 							return false;
 						}
 						else if(this.controlFlow[this.controlFlow.length-1].type != 'Tant que')
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>Tant que</strong> correspondant à ce <strong>Fintq</strong>. A la place je trouve un <strong>' + this.controlFlow[this.controlFlow.length-1].type + '</strong>');
+							this.addError('je ne trouve pas le <strong>Tant que</strong> correspondant à ce <strong>Fintq</strong>. A la place je trouve un <strong>' + this.controlFlow[this.controlFlow.length-1].type + '</strong>');
 							return false;
 						}
 
@@ -1385,7 +1634,7 @@ $(function () {
 
 					else
 					{
-						this.addError(this.line, 'Je ne comprend pas cette instruction : <strong>' + instruction + '</strong>');
+						this.addError('Je ne comprend pas cette instruction : <strong>' + instruction + '</strong>');
 						return false;
 					}
 
@@ -1397,6 +1646,7 @@ $(function () {
 						if(screenOutput.length >= 10) {
 							screenOutput = screenOutput.substr(0,10) + '..';
 						}
+						//TODO ui
 						$('#trace').children('tbody').children('tr').eq(traceEndLine).children('td').last().html(screenOutput);
 						screenOutput = '';
 
@@ -1404,6 +1654,7 @@ $(function () {
 						if(keyboardInput.length >= 10) {
 							keyboardInput = keyboardInput.substr(0,10) + '..';
 						}
+						//TODO ui
 						$('#trace').children('tbody').children('tr').eq(traceEndLine+1).children('td').last().html(keyboardInput);
 						if(keyboardInput !== '') {
 							keyboardInput = '';
@@ -1415,11 +1666,16 @@ $(function () {
 				//if unset this.mode (this.mode=1)
 				else
 				{
-					this.addError(this.line, 'Je m\'attendais à trouver <strong>Types:</strong>, <strong>Variables:</strong> ou <strong>Instructions:</strong> mais ça n\'a pas été le cas');
+					this.addError('Je m\'attendais à trouver <strong>Types:</strong>, <strong>Variables:</strong> ou <strong>Instructions:</strong> mais ça n\'a pas été le cas');
 				}
 			}
 			this.line++;
-			this.setActualLine(this.line);
+
+
+			//Set the actual line
+			this.ui.removeMarker('current');
+			this.ui.addMarker(this.line,'current');
+			this.ui.scrollEditorCurrent();
 			
 			//to the next instrction
 			if(this.loopMode){
@@ -1439,6 +1695,7 @@ $(function () {
 
 		this.addTraceColumn = function(line)
 		{
+			//TODO ui
 			var that = this;
 			$('#trace').children('thead').children('tr').append('<th>' + (line+1) + '</th>');
 			var traceEndLine = 0;
@@ -1462,21 +1719,11 @@ $(function () {
 			return traceEndLine;
 		};
 
-		this.scrollToLastLine = function()
-		{
-			//If the element is below the screen
-			if($('html, body').scrollTop() < ($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30))){
-				$('html, body').scrollTop($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30));
-			}
-			//else if the element is above
-			else if($('html, body').scrollTop() > $('#sortie').children('li').last().offset().top){
-				$('html, body').scrollTop($('#sortie').children('li').last().offset().top);
-			}
-		};
 
 		//execute until the end
 		this.start = function()
 		{
+			//TODO ui
 			//Buttons style
 			$('.btn-start').addClass('btn-pause');
 			$('.btn-start').html('<span class="glyphicon glyphicon-pause"></span> Pause');
@@ -1503,6 +1750,7 @@ $(function () {
 
 		this.submit = function()
 		{
+			//TODO ui
 			if(this.inputCreated && !this.inputSubmited)
 			{
 				$('#sortie').find('.input-l' + this.instructionsCount).attr('disabled','disabled');
@@ -1517,6 +1765,7 @@ $(function () {
 
 		this.pause = function()
 		{
+			//TODO ui
 			$('.btn-pause').addClass('btn-start');
 			$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer');
 			$('.btn-pause').removeClass('btn-pause');
@@ -1531,28 +1780,23 @@ $(function () {
 			this.init();
 		};
 
-		this.disableEditor = function(disable)
-		{
-			if(disable)
-			{
-				$('.CodeMirror').css('background-color', '#515151');
-				$('.CodeMirror-gutters').css('background-color', '#5a5a5a');
-				this.editor.setOption('readOnly', true);
-			}
-			else
-			{
-				$('.CodeMirror').css('background-color', '#2c2827');
-				$('.CodeMirror-gutters').css('background-color', '#34302f');
-				this.editor.setOption('readOnly', false);
-			}
-		};
 
 	}
 	// end of interpreter object NF04
 
 
+	//Init User interface
+	var ui = new UI();
 	//Init interpreter
-	var nf04 = new NF04();
+	var nf04 = new NF04(ui);
+
+
+
+
+
+
+
+
 
 	//events
 	$('.algo-control').on('click','.btn-start', function(){
@@ -1674,12 +1918,14 @@ $(function () {
 			nf04.submit();
 		}
 	});
-
-	nf04.editor.on('change', function()
+/*
+//TODO ui
+	ui.editor.on('change', function()
 	{
 		nf04.tooltipMsgs = [];
 		nf04.updateTooltips();
 	});
+*/
 
 
 	//Open filename parameter in url
@@ -1694,6 +1940,8 @@ $(function () {
 			success:     function(data){nf04.editor.getDoc().setValue(data);}
 		});
 	}
+
+
 });
 
 //remove Strip whitespace from the beginning and end of a string
