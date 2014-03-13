@@ -180,7 +180,7 @@ CodeMirror.defineMode("nf04", function(conf, parserConf)
             }
 
             //Keywords
-            if(stream.match(/(si|alors|sinon|sinonsi|finsi|tant|que|faire|fintq|pour|allant|de|à|par pas de|finpour|clavier)/i))
+            if(stream.match(/(alors|sinonsi|sinon|si|finsi|tant|que|faire|fintq|pour|allant|de|à|par pas de|finpour|clavier)/i))
             {
                 return STYLE.KEYWORD;
             }
