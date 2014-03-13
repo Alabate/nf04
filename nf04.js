@@ -589,7 +589,7 @@ $(function () {
 				//Output type
 				out.type = 'booléen';
 			}
-			else if($.inArray(operator, ['ET','OU']) != -1)
+			else if($.inArray(operator.toLowerCase(), ['et','ou']) != -1)
 			{
 				if($.inArray(valueObj1.type, ['booléen']) == -1 || $.inArray(valueObj2.type, ['booléen'])  == -1)
 				{
@@ -612,7 +612,7 @@ $(function () {
 			}
 
 			//calculate
-			switch(operator)
+			switch(operator.toLowerCase())
 			{
 				case '+':
 					out.value = valueObj1.value + valueObj2.value;
@@ -655,10 +655,10 @@ $(function () {
 				case '>':
 					out.value = valueObj1.value > valueObj2.value;
 					break;
-				case 'ET':
+				case 'et':
 					out.value = valueObj1.value && valueObj2.value;
 					break;
-				case 'OU':
+				case 'ou':
 					out.value = valueObj1.value || valueObj2.value;
 					break;
 				default:
@@ -1082,21 +1082,37 @@ $(function () {
 						
 						//if we are here, we jump to "FinSi" the "true block" of the whole "Si" is the block just before. So this one is "false".
 						found = false;
+						var SiLine = this.controlFlow[this.controlFlow.length-1].line;
 						for (i = this.line+1; i < this.editor.lineCount(); i++)
 						{
 							lineContent = this.editor.getLine(i).trim();
-							if(lineContent.toLowerCase() == 'finsi')
+
+							if((matches = lineContent.match(/^Si\s+(.+)\s+Alors$/i)) !== null)
 							{
-								this.controlFlow.pop();
-								found = true;
-								this.line = i;
-								dontTrace = true;
-								break;
+								this.controlFlow.push({
+									'type' : 'Si',
+									'line' : i
+								});									
+							}
+							else if(lineContent.toLowerCase() == 'finsi')
+							{
+								if(this.controlFlow[this.controlFlow.length-1].line == SiLine)
+								{
+									this.controlFlow.pop();
+									found = true;
+									this.line = i;
+									dontTrace = true;
+									break;
+								}
+								else
+								{
+									this.controlFlow.pop();
+								}
 							}
 						}
 						if(!found)
 						{
-							this.addError(this.line, 'je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>Si .. Alors</strong>');
+							this.addError(this.line, 'je ne trouve pas le <strong>FinSi</strong> correspondant à ce <strong>SinonSi ... Alors</strong>');
 							return false;
 						}
 
@@ -1119,10 +1135,12 @@ $(function () {
 						}
 
 						//save "Si" position
-						this.controlFlow[this.controlFlow.length] = {};
-						this.controlFlow[this.controlFlow.length-1].type = 'Si';
-						this.controlFlow[this.controlFlow.length-1].line = this.line;
-						this.controlFlow[this.controlFlow.length-1].value = condition;
+						this.controlFlow.push({
+							'type' : 'Si',
+							'line' : this.line,
+							'value' : condition
+						});
+
 
 						//If condition is false, we look for 'Sinon', 'SinonSi' or 'FinSi'
 						if(!condition.value)
@@ -1130,46 +1148,72 @@ $(function () {
 							found = false;
 							for (i = this.line+1; i < this.editor.lineCount(); i++)
 							{
-								lineContent = this.editor.getLine(i).trim();
-								if((matches = lineContent.match(/^SinonSi\s+(.+)\s+Alors$/i)) !== null)
-								{
-									matches[1] = matches[1].trim();
-									if(matches[1] === '')
-									{
-										this.addError(this.line, 'La condition du <strong>' + lineContent + '</strong> est vide');
-										return false;
-									}
-									condition = this.executeExpression(matches[1]);
-									if(condition.type != 'booléen')
-									{
-										this.addError(this.line, 'La condition du <strong>' + lineContent + '</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + condition.type + '</strong>');
-										return false;
-									}
+								lineContent = this.editor.getLine(i).trim(); 
 
-									//If the condition of the SinonSi is true, we jump on his algo, else we continue to look for ...
-									if(condition.value)
+								//Searching for sub "Si" or "FinSi"
+								if((matches = lineContent.match(/^Si\s+(.+)\s+Alors$/i)) !== null)
+								{
+									this.controlFlow.push({
+										'type' : 'Si',
+										'line' : i
+									});									
+								}
+								else if(lineContent.toLowerCase() == 'finsi')
+								{
+									if(this.controlFlow[this.controlFlow.length-1].line == this.line)
+									{
+										this.controlFlow.pop();
+										found = true;
+										this.addTraceColumn(this.line);
+										this.line = i;
+										dontTrace = true;
+										break;
+									}
+									else
+									{
+										this.controlFlow.pop();
+									}
+								}
+
+								//When we are in the actual "Si" level
+								else if(this.controlFlow[this.controlFlow.length-1].line == this.line)
+								{
+
+								
+									if((matches = lineContent.match(/^SinonSi\s+(.+)\s+Alors$/i)) !== null)
+									{
+										matches[1] = matches[1].trim();
+										if(matches[1] === '')
+										{
+											this.addError(this.line, 'La condition du <strong>' + lineContent + '</strong> est vide');
+											return false;
+										}
+										var temp = this.line;
+										this.line = i;
+										condition = this.executeExpression(matches[1]);
+										this.line = temp;
+										if(condition.type != 'booléen')
+										{
+											this.addError(i, 'La condition du <strong>' + lineContent + '</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + condition.type + '</strong>');
+											return false;
+										}
+
+										//If the condition of the SinonSi is true, we jump on his algo, else we continue to look for ...
+										if(condition.value)
+										{
+											found = true;
+											this.addTraceColumn(this.line);
+											this.line = i;
+											break;
+										}
+									}
+									else if(lineContent.toLowerCase() == 'sinon')
 									{
 										found = true;
 										this.addTraceColumn(this.line);
 										this.line = i;
 										break;
 									}
-								}
-								else if(lineContent.toLowerCase() == 'sinon')
-								{
-									found = true;
-									this.addTraceColumn(this.line);
-									this.line = i;
-									break;
-								}
-								else if(lineContent.toLowerCase() == 'finsi')
-								{
-									this.controlFlow.pop();
-									found = true;
-									this.addTraceColumn(this.line);
-									this.line = i;
-									dontTrace = true;
-									break;
 								}
 							}
 							if(!found)
