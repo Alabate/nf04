@@ -330,7 +330,7 @@ $(function () {
 				out.categorie = 'function';
 				out.type = 'function';
 				out.value = matches[1].toLowerCase();
-				if(matches[1].toLowerCase() != 'e' && matches[1].toLowerCase() != 'non')
+				if(matches[1].toLowerCase() != 'e' && matches[1].toLowerCase() != 'non' && matches[1].toLowerCase() != 'random')
 				{
 					this.addError(this.line, 'La fonction ou le sous-algorithme <strong>' + matches[1] + '</strong> n\'existe pas.');
 					return false;
@@ -741,6 +741,13 @@ $(function () {
 						return false;
 					}
 					value.value = !(value.value);
+					return value;
+				case 'random': //Undocumented function TODO improve function system
+					value = {
+						'value' : Math.random(),
+						'type' : 'réel',
+						'categorie' : 'value'
+					};
 					return value;
 				default:
 					this.addError(this.line, 'La fonction <strong>' + funcName + '()</strong> n\'existe pas');
