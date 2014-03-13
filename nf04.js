@@ -260,6 +260,10 @@ $(function () {
 							buffer = '';
 							stringMode = false;
 						}
+						else
+						{
+							buffer += expressionString[i];
+						}
 					}
 				}
 				else
