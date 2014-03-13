@@ -330,7 +330,7 @@ $(function () {
 				out.categorie = 'function';
 				out.type = 'function';
 				out.value = matches[1].toLowerCase();
-				if(matches[1].toLowerCase() != 'e' && matches[1].toLowerCase() != 'non' && matches[1].toLowerCase() != 'random')
+				if(matches[1].toLowerCase() != 'e' && matches[1].toLowerCase() != 'non' && matches[1].toLowerCase() != 'abs' && matches[1].toLowerCase() != 'random')
 				{
 					this.addError(this.line, 'La fonction ou le sous-algorithme <strong>' + matches[1] + '</strong> n\'existe pas.');
 					return false;
@@ -741,6 +741,15 @@ $(function () {
 						return false;
 					}
 					value.value = !(value.value);
+					return value;
+				case 'abs':
+					value = this.evaluateExpression(input);
+					if(value.type != 'entier')
+					{
+						this.addError(this.line, 'Vous ne pouvez pas utiliser la fonction <strong>entier()</strong> sur une valeur de type <strong>' + value.type + '</strong>. Cette fonction n\'accepte que des <strong>entiers</strong>');
+						return false;
+					}
+					value.value = Math.abs(value.value);
 					return value;
 				case 'random': //Undocumented function TODO improve function system
 					value = {
