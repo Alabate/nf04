@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 //This declares to JSHint that $ and codemirror are global variable, and the false indicates that it should not be overridden.
 	/* global $:false, CodeMirror:false */
 $(function () {
@@ -189,6 +189,25 @@ $(function () {
 			return this.editor.getLine(line);
 		};
 
+		/**
+		 * Add a new variable to the trace table
+		 * @param {string} variable - variable name
+		 */
+		this.traceAddNewVar = function(variable)
+		{
+			var lineNbr = $('#trace').find('tbody').children('tr').length;
+			$('#trace').find('tbody').children('tr').eq(lineNbr-2).before('<tr><th>' + variable + '</th></tr>');
+		};
+
+		/**
+		 * add trace new column and write vars to this new column
+		 * @param {string[]} variables - List of all variables values
+		**/
+		this.traceAddNewcolumn = function()
+		{
+			$('#trace').children('thead').children('tr').append('<th>' + (line+1) + '</th>');
+		};
+
 
 		/**
 		 * Add a marker and a background to the line
@@ -263,7 +282,7 @@ $(function () {
 
 			//set trace and output divs
 			$('#sortie').html('');
-			$('#trace').html('<thead><tr><th>&nbsp;</th></tr></thead><tbody></tbody>');
+			$('#trace').html('<thead><tr><th>&nbsp;</th></tr></thead><tbody><tr><th><em>Écran</em></th></tr><tr><th><em>Clavier</em></th></tr></tbody>');
 
 			//Hide all old tooltips
 			//this.updateTooltips()
@@ -1151,8 +1170,7 @@ $(function () {
 								}
 
 								//add to the trace table
-								//TODO ui
-								$('#trace').find('tbody').append('<tr><th>' + vars[j] + '</th></tr>');
+								this.ui.traceAddNewVar(vars[j]);
 							}
 						}
 					}
@@ -1168,10 +1186,7 @@ $(function () {
 					//init screen & keyboard output
 					if(this.traceScreenLine == -1)
 					{
-						//TODO ui
-						$('#trace').find('tbody').append('<tr><th><em>Écran</em></th></tr>');
-						$('#trace').find('tbody').append('<tr><th><em>Clavier</em></th></tr>');
-						this.traceScreenLine = $('#trace').find('tbody').length-1;
+						this.traceScreenLine = this.ui.traceFinalize();
 					}
 
 					//Find instruction
@@ -1937,7 +1952,7 @@ $(function () {
 			type:        'GET',
 			dataType:    'text',
 			cache:       false,
-			success:     function(data){nf04.editor.getDoc().setValue(data);}
+			success:     function(data){ui.editor.getDoc().setValue(data);}
 		});
 	}
 
