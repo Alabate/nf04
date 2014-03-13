@@ -1743,6 +1743,20 @@ $(function () {
 	{
 		nf04.tooltipMsgs = [];
 		nf04.updateTooltips();
+
+
+		//Resize to fit with the text
+		var docHeight = $('.CodeMirror-sizer').height();
+		if(docHeight !== 0)
+		{
+			if(docHeight <= 300) {
+				docHeight = 300;
+			}
+			else if(docHeight >= $(window).height() - 100) {
+				docHeight = $(window).height() - 100;
+			}
+			$('.CodeMirror').css('height', docHeight); 
+		}
 	});
 
 
