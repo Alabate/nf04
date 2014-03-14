@@ -72,57 +72,7 @@ $(function () {
 				this.editor.setOption('readOnly', false);
 			}
 		};
-
-		/**
-		 * DEPRECATED Remove error/warning tooltips and add new from the `messages` array
-		 * @param {(string[line]|bool)} [messages=false] - List of all messages indexed by line number. If `false` (default), this function only hide old tooltips.
-		 */
-		this.updateTooltips = function(messages)
-		{
-			messages = (messages !== undefined )? messages : false;
-			$('.tooltip').css('display', 'none');
-			if(messages !== false && messages.length >= 1)
-			{
-				var editor = this.editor;
-				$.each(messages,function(line, msg)
-				{
-					editor.addLineClass(line, 'wrap', 'tooltip-msg tooltip-msg-' + line);
-					$('.tooltip-msg-' + line).tooltip({
-						'html': true,
-						'title': msg,
-						'container': 'body'
-					});
-				});
-			}
-		};
-
-		/**
-		 * Add a new tooltip
-		 * @param {int} line - The line that will be tooltiped
-		 * @param {string} message - The html content of the tooltip
-		 */
-		this.addTooltip = function(line, message)
-		{
-			this.editor.addLineClass(line, 'wrap', 'tooltip-msg tooltip-msg-' + line);
-			$('.tooltip-msg-' + line).tooltip({
-				'html': true,
-				'title': message,
-				'container': 'body'
-			});
-		};
-
-		/**
-		 * remove all tooltips
-		 */
-		this.removeTooltips = function()
-		{
-			for (var i = 0; i < this.getLineCount(); i++) {
-				$('.tooltip-msg-' + i).tooltip('destroy');
-				this.editor.removeLineClass(i, 'wrap', 'tooltip-msg tooltip-msg-' + i);
-			}
-		};
-
-
+		
 		/**
 		 * Add a html content in a list element at the end of the output list
 		 * @param {string} content - Html content of the list element
@@ -321,9 +271,6 @@ $(function () {
 			//set trace and output divs
 			$('#sortie').html('');
 			$('#trace').html('<thead><tr><th>&nbsp;</th></tr></thead><tbody><tr><th><em>Écran</em></th></tr><tr><th><em>Clavier</em></th></tr></tbody>');
-
-			//Hide all old tooltips
-			this.removeTooltips();
 		};
 
 		/**
@@ -382,7 +329,6 @@ $(function () {
 			this.line = 0;
 			this.instructionsCount = 0;
 			this.traceScreenLine = -1;
-			this.tooltipMsgs = [];
 			this.inputSubmited = false;
 			this.inputCreated = false;
 			this.inputValue = '';
@@ -410,7 +356,6 @@ $(function () {
 			if(line != -1) {
 				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'danger');
 				this.ui.addMarker(line, 'error');
-				this.ui.addTooltip(line, message);
 			}
 			else {
 				this.ui.addToOutput(message, 'danger');
@@ -445,7 +390,6 @@ $(function () {
 			if(line != -1) {
 				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'warning');
 				this.ui.addMarker(line, 'warning');
-				this.ui.addTooltip(line, message);
 			}
 			else {
 				this.ui.addToOutput(message, 'warning');
@@ -2022,7 +1966,6 @@ $(function () {
 
 	ui.editor.on('change', function()
 	{
-		ui.removeTooltips();
 		ui.resizeEditor();
 	});
 
