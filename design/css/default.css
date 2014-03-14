@@ -5,20 +5,38 @@
 
 .container { width: auto; }
 
-.errorMark{
-	width:.8em;
+
+
+
+.markerColumn-error{
+	width: 0.8em;
 }
-.actualLineMark{
-	width:.8em;
-	margin-left:-3px;
+.markerColumn-current{
+	width: 0.8em;
+	margin-left: -3px;
 }
 
-.errorBg{
+.marker-error{
+	color:#FFA500;
+}
+.marker-warning{
+	color:#f00;
+}
+.marker-current{
+	color:#6FAEDF;
+}
+
+.bg-error{
 	background-color:#751a19;
 }
-.warningBg{
+.bg-warning{
 	background-color:#755319;
 }
+.bg-current{
+	background-color:#133f5e;
+}
+
+
 
 
 
@@ -27,9 +45,6 @@
 	padding-bottom:2px;
 }
 
-.actualLine{
-	background-color:#133f5e;
-}
 
 .navbar{
 	border-radius: 0;
@@ -52,8 +67,7 @@
 	padding-top:0;
 	padding-bottom: 0;
 	line-height: 28px;
-	outline: 0;
-	text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.25);
+	text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
 	color: #428BCA;
 	border:0;
 	padding:0 15px;
@@ -102,8 +116,8 @@
 @media (max-width: 768px) {
 	.control-bar .navbar-nav{
 		float: left;
-		margin: 0px;
-		padding-left: 0px;
+		margin: 0;
+		padding-left: 0;
 	}
 	.control-bar .navbar-right{
 		float:right;

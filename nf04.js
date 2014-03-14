@@ -9,9 +9,7 @@ $(function () {
 	 */
 	function UI()
 	{
-		this.firstInit = false;
 		this.editor = null;
-		this.tooltipMsgs = [];
 
 		/**
 		 * Disable or enable buttons with the class that start with `btn-`.
@@ -105,7 +103,6 @@ $(function () {
 		 */
 		this.addTooltip = function(line, message)
 		{
-			this.tooltipMsgs[line] = message;
 			this.editor.addLineClass(line, 'wrap', 'tooltip-msg tooltip-msg-' + line);
 			$('.tooltip-msg-' + line).tooltip({
 				'html': true,
@@ -119,13 +116,10 @@ $(function () {
 		 */
 		this.removeTooltips = function()
 		{
-
-			for (var i = 0; i < this.editor.lineCount(); i++) {
+			for (var i = 0; i < this.getLineCount(); i++) {
 				$('.tooltip-msg-' + i).tooltip('destroy');
 				this.editor.removeLineClass(i, 'wrap', 'tooltip-msg tooltip-msg-' + i);
 			}
-
-			this.tooltipMsgs = [];
 		};
 
 
@@ -149,7 +143,7 @@ $(function () {
 		/**
 		 * Scroll to the last line of the output (smart scroll like scroll after a focus on an input) 
 		 */
-		this.scrollToOutput = function()
+		this.focusOnOutput = function()
 		{
 			//If the element is below the screen
 			if($('html, body').scrollTop() < ($('#sortie').children('li').last().offset().top + $('#sortie').children('li').last().height() - ($( window ).height() - 30))){
@@ -159,6 +153,9 @@ $(function () {
 			else if($('html, body').scrollTop() > $('#sortie').children('li').last().offset().top){
 				$('html, body').scrollTop($('#sortie').children('li').last().offset().top);
 			}
+
+			//focus if there is an input
+			$('#sortie').children('li').last().find('input').focus();
 		};
 
 
@@ -168,7 +165,7 @@ $(function () {
 		 */
 		this.scrollEditorCurrent = function(line)
 		{
-			var elementHeight = Math.round($('.CodeMirror-vscrollbar').children('div').height() / this.editor.lineCount());
+			var elementHeight = Math.round($('.CodeMirror-vscrollbar').children('div').height() / this.getLineCount());
 			//If the element is below the view
 			if($('.CodeMirror-vscrollbar').scrollTop() < (elementHeight*(line+1) - $('.CodeMirror').height() + 5)) {
 				$('.CodeMirror-vscrollbar').scrollTop(elementHeight*(line+1) - $('.CodeMirror').height() + 5);
@@ -190,6 +187,15 @@ $(function () {
 		};
 
 		/**
+		 * Get the number of content's line of the editor
+		 * @return {int} - the number of content's line of the editor
+		 */
+		this.getLineCount = function()
+		{
+			return this.editor.lineCount();
+		};
+
+		/**
 		 * Add a new variable to the trace table
 		 * @param {string} variable - variable name
 		 */
@@ -200,12 +206,28 @@ $(function () {
 		};
 
 		/**
-		 * add trace new column and write vars to this new column
-		 * @param {string[]} variables - List of all variables values
+		 * add trace a new column
+		 * @param {int} line - The line that will be writed on the header of the column
 		**/
-		this.traceAddNewcolumn = function()
+		this.traceAddNewColumn = function(line)
 		{
 			$('#trace').children('thead').children('tr').append('<th>' + (line+1) + '</th>');
+			$('#trace').children('tbody').children('tr').append('<td></td>');
+		};
+
+
+		/**
+		 * Edit the last column to set values of a var
+		 * @param {int} id - the id of the var. it's basically the number of used of the traceAddNewVar function. The first registered is 0, the second 1...). If negative, it count from the end => clavier=-1 ; ecran=-2
+		 * @param {string} varArray - The value of the var as a string
+		 */
+		this.traceSetVar = function(id, value)
+		{
+			if(id < 0) {
+				id = id + $('#trace').find('tbody').children('tr').length;
+			}
+
+			$('#trace').find('tbody').children('tr').eq(id).children('td').last().html(value);
 		};
 
 
@@ -228,14 +250,14 @@ $(function () {
 			if(markerType == 'current')
 			{
 				marker.innerHTML = '>';
-				this.editor.setGutterMarker(line, 'currentLine', marker);
+				this.editor.setGutterMarker(line, 'markerColumn-current', marker);
 			}
 			else
 			{
 				marker.innerHTML = '●';
-				this.editor.setGutterMarker(line, 'error', marker);
+				this.editor.setGutterMarker(line, 'markerColumn-error', marker);
 			}
-		}
+		};
 
 
 		/**
@@ -249,7 +271,7 @@ $(function () {
 			var i;
 			if(!markerType)
 			{
-				for (i = 0; i < this.editor.lineCount(); i++) {
+				for (i = 0; i < this.getLineCount(); i++) {
 					this.editor.removeLineClass(i, 'background', 'bg-warning');
 					this.editor.removeLineClass(i, 'background', 'bg-danger');
 					this.editor.removeLineClass(i, 'background', 'bg-current');
@@ -257,7 +279,7 @@ $(function () {
 			}
 			else
 			{
-				for (i = 0; i < this.editor.lineCount(); i++) {
+				for (i = 0; i < this.getLineCount(); i++) {
 					this.editor.removeLineClass(i, 'background', 'bg-' + markerType);
 				}
 			}
@@ -268,8 +290,24 @@ $(function () {
 
 
 		/**
-		 * reset user interface
+		 * Resize the editor by fitting the editor height with the text. The maximum height of the editor is (window's height - 100px), the minimum height of the editor is 300px
 		 */
+		this.resizeEditor = function()
+		{
+			//Resize to fit with the text
+			var docHeight = $('.CodeMirror-sizer').height();
+			if(docHeight !== 0)
+			{
+				if(docHeight <= 300) {
+					docHeight = 300;
+				}
+				else if(docHeight >= $(window).height() - 100) {
+					docHeight = $(window).height() - 100;
+				}
+				$('.CodeMirror').css('height', docHeight);
+			}
+		};
+
 		this.reinit = function()
 		{
 
@@ -285,7 +323,7 @@ $(function () {
 			$('#trace').html('<thead><tr><th>&nbsp;</th></tr></thead><tbody><tr><th><em>Écran</em></th></tr><tr><th><em>Clavier</em></th></tr></tbody>');
 
 			//Hide all old tooltips
-			//this.updateTooltips()
+			this.removeTooltips();
 		};
 
 		/**
@@ -312,7 +350,7 @@ $(function () {
 				styleActiveLine: true,
 				matchBrackets: true,
 				theme: 'nf04style',
-				gutters: ['CodeMirror-linenumbers', 'error', 'currentLine']
+				gutters: ['CodeMirror-linenumbers', 'markerColumn-error', 'markerColumn-current']
 			});
 			this.reinit();
 		};
@@ -370,21 +408,21 @@ $(function () {
 
 			//Add style
 			if(line != -1) {
-				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'danger')
+				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'danger');
 				this.ui.addMarker(line, 'error');
 				this.ui.addTooltip(line, message);
 			}
 			else {
 				this.ui.addToOutput(message, 'danger');
 			}
-			this.ui.scrollToOutput();
+			this.ui.focusOnOutput();
 
 			//Disable all buttons and editor
 			this.ui.disableBtn('start');
 			this.ui.disableBtn('pause');
 			this.ui.disableBtn('next');
 			this.ui.disableBtn('submit');
-			this.ui.disableEditor();
+			this.ui.disableEditor(false);
 
 			//Stop interpreter
 			this.line = -1;
@@ -405,16 +443,41 @@ $(function () {
 
 			//Add style
 			if(line != -1) {
-				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'warning')
+				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'warning');
 				this.ui.addMarker(line, 'warning');
 				this.ui.addTooltip(line, message);
 			}
 			else {
 				this.ui.addToOutput(message, 'warning');
 			}
-			this.ui.scrollToOutput();
+			this.ui.focusOnOutput();
 		};
 
+
+		
+		/**
+		 * add trace a new column and put values of each var inside
+		 * @param {int} [line] - The line that will be writed on the header of the column. If not set, the actual line (this.line) is used
+		**/
+		this.traceSetNewColumn = function(line)
+		{
+			line = (line !== undefined)? line : this.line;
+
+			this.ui.traceAddNewColumn(line);
+			var that = this;
+			$.each(this.varsNames, function(index, value){
+				if( that.varsLastValues[value] != that.varsValues[value] )
+				{
+					var valueObj = {
+						'value' : that.varsValues[value],
+						'type' : that.varsTypes[value],
+						'categorie' : 'value'
+					};
+					that.ui.traceSetVar(index, that.valueobjToString(valueObj));
+					that.varsLastValues[value] = that.varsValues[value];
+				}
+			});
+		};
 
 		this.executeExpression = function(expressionString, quotes)
 		{
@@ -1046,7 +1109,7 @@ $(function () {
 			if(instruction === undefined)
 			{
 				this.ui.addToOutput('<u>Ligne ' + (this.line+1) + '</u> : L\'algorithme s\'est terminé correctement en <strong>' + this.instructionsCount + '</strong> instructions.', 'success');
-				this.ui.scrollToOutput();
+				this.ui.focusOnOutput();
 				this.line = -1;
 
 				this.ui.removeMarker('current');
@@ -1088,7 +1151,7 @@ $(function () {
 						this.mode++;
 						document.title = matches[1];
 						this.ui.addToOutput('<u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;') + '</strong>', 'success');
-						this.ui.scrollToOutput();
+						this.ui.focusOnOutput();
 					}
 					else
 					{
@@ -1204,12 +1267,6 @@ $(function () {
 				//if Instructions this.mode
 				else if(this.mode == 4)
 				{
-					//init screen & keyboard output
-					if(this.traceScreenLine == -1)
-					{
-						this.traceScreenLine = this.ui.traceFinalize();
-					}
-
 					//Find instruction
 					var screenOutput = '';
 					var keyboardInput = '';
@@ -1250,12 +1307,8 @@ $(function () {
 						for (i = 0; i < params.length; i++) {
 							screenOutput += this.valueobjToString(this.executeExpression(params[i]),false);
 						}
-						//TODO ui
-						$('#sortie').append('<li class="list-group-item">' + screenOutput + '</li>');
-
-						//scroll to the message
-						this.scrollToLastLine();
-					
+						this.ui.addToOutput(screenOutput);
+						this.ui.focusOnOutput();
 					}
 					else if((matches = instruction.match(/^lire\s*\(\s*(.+)\s*!\s*([a-z0-9_]+)\s*\)$/i)) !== null) // Lire(<source> ! <sortie>)
 					{
@@ -1276,11 +1329,11 @@ $(function () {
 						if(this.inputValue === '' && !this.inputCreated)
 						{
 							//TODO ui
-							$('#sortie').append('<li class="list-group-item"><div class="input-group"><input type="text" class="form-control input-l'+this.instructionsCount+' input-submit"/> '
-								+ '<span class="input-group-btn"><button class="btn btn-default btn-submit" type="button">Envoyer !</button></span></div></li>');
+							this.ui.addToOutput('<div class="input-group"><input type="text" class="form-control input-l'+this.instructionsCount+' input-submit"/> '
+								+ '<span class="input-group-btn"><button class="btn btn-default btn-submit" type="button">Envoyer !</button></span></div>');
+							this.ui.focusOnOutput();
+
 							this.inputCreated = true;
-							this.scrollToLastLine();
-							$('#sortie').find('.input-l' + this.instructionsCount)[0].focus();
 							return false;
 						}
 						if(this.inputValue !== '' && !this.inputCreated) {
@@ -1352,16 +1405,16 @@ $(function () {
 						//if we are here, we jump to "FinSi" the "true block" of the whole "Si" is the block just before. So this one is "false".
 						found = false;
 						var SiLine = this.controlFlow[this.controlFlow.length-1].line;
-						for (i = this.line+1; i < this.editor.lineCount(); i++)
+						for (i = this.line+1; i < this.ui.getLineCount(); i++)
 						{
-							lineContent = this.editor.getLine(i).trim();
+							lineContent = this.ui.getLine(i).trim();
 
 							if((matches = lineContent.match(/^Si\s+(.+)\s+Alors$/i)) !== null)
 							{
 								this.controlFlow.push({
 									'type' : 'Si',
 									'line' : i
-								});									
+								});
 							}
 							else if(lineContent.toLowerCase() == 'finsi')
 							{
@@ -1415,9 +1468,9 @@ $(function () {
 						if(!condition.value)
 						{
 							found = false;
-							for (i = this.line+1; i < this.editor.lineCount(); i++)
+							for (i = this.line+1; i < this.ui.getLineCount(); i++)
 							{
-								lineContent = this.editor.getLine(i).trim(); 
+								lineContent = this.ui.getLine(i).trim();
 
 								//Searching for sub "Si" or "FinSi"
 								if((matches = lineContent.match(/^Si\s+(.+)\s+Alors$/i)) !== null)
@@ -1425,7 +1478,7 @@ $(function () {
 									this.controlFlow.push({
 										'type' : 'Si',
 										'line' : i
-									});									
+									});
 								}
 								else if(lineContent.toLowerCase() == 'finsi')
 								{
@@ -1433,7 +1486,7 @@ $(function () {
 									{
 										this.controlFlow.pop();
 										found = true;
-										this.addTraceColumn(this.line);
+										this.traceSetNewColumn();
 										this.line = i;
 										dontTrace = true;
 										break;
@@ -1471,7 +1524,7 @@ $(function () {
 										if(condition.value)
 										{
 											found = true;
-											this.addTraceColumn(this.line);
+											this.traceSetNewColumn();
 											this.line = i;
 											break;
 										}
@@ -1479,7 +1532,7 @@ $(function () {
 									else if(lineContent.toLowerCase() == 'sinon')
 									{
 										found = true;
-										this.addTraceColumn(this.line);
+										this.traceSetNewColumn();
 										this.line = i;
 										break;
 									}
@@ -1576,12 +1629,12 @@ $(function () {
 						if((forStep.value > 0 && forBegin.value > forEnd.value) || (forStep.value < 0 && forBegin.value < forEnd.value))
 						{
 							found = false;
-							for (i = this.line+1; i < this.editor.lineCount(); i++)
+							for (i = this.line+1; i < this.ui.getLineCount(); i++)
 							{
-								lineContent = this.editor.getLine(i).trim();
+								lineContent = this.ui.getLine(i).trim();
 								if(lineContent.toLowerCase() == 'finpour')
 								{
-									this.addTraceColumn(this.line);
+									this.traceSetNewColumn();
 									found = true;
 									this.line = i;
 									break;
@@ -1648,7 +1701,7 @@ $(function () {
 						}
 						condition = this.executeExpression(matches[1]);
 						if(condition.type != 'booléen') {
-							this.addError('La condition de la boucle <strong>Tant que</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + cond.type + '</strong>');
+							this.addError('La condition de la boucle <strong>Tant que</strong> doit être un <strong>booléen</strong> mais c\'est un <strong>' + condition.type + '</strong>');
 							return false;
 						}
 
@@ -1656,12 +1709,12 @@ $(function () {
 						if(!condition.value)
 						{
 							found = false;
-							for (i = this.line+1; i < this.editor.lineCount(); i++)
+							for (i = this.line+1; i < this.ui.getLineCount(); i++)
 							{
-								lineContent = this.editor.getLine(i).trim();
+								lineContent = this.ui.getLine(i).trim();
 								if(lineContent.toLowerCase() == 'fintq')
 								{
-									this.addTraceColumn(this.line);
+									this.traceSetNewColumn();
 									found = true;
 									this.line = i;
 									break;
@@ -1721,24 +1774,20 @@ $(function () {
 
 					if(!dontTrace)
 					{
-						var traceEndLine = this.addTraceColumn(this.line);
+						this.traceSetNewColumn();
 						//Screen output 
 						if(screenOutput.length >= 10) {
 							screenOutput = screenOutput.substr(0,10) + '..';
 						}
-						//TODO ui
-						$('#trace').children('tbody').children('tr').eq(traceEndLine).children('td').last().html(screenOutput);
+						this.ui.traceSetVar(-2, screenOutput);
 						screenOutput = '';
 
 						//keyboard input
 						if(keyboardInput.length >= 10) {
 							keyboardInput = keyboardInput.substr(0,10) + '..';
 						}
-						//TODO ui
-						$('#trace').children('tbody').children('tr').eq(traceEndLine+1).children('td').last().html(keyboardInput);
-						if(keyboardInput !== '') {
-							keyboardInput = '';
-						}
+						this.ui.traceSetVar(-1, keyboardInput);
+						keyboardInput = '';
 					}
 					this.instructionsCount ++;
 				}
@@ -1773,42 +1822,14 @@ $(function () {
 			this.nextLine();
 		};
 
-		this.addTraceColumn = function(line)
-		{
-			//TODO ui
-			var that = this;
-			$('#trace').children('thead').children('tr').append('<th>' + (line+1) + '</th>');
-			var traceEndLine = 0;
-			$.each(this.varsNames, function(index, value){
-				if( that.varsLastValues[value] != that.varsValues[value] )
-				{
-					var valueObj = {};
-					valueObj.value = that.varsValues[value];
-					valueObj.type = that.varsTypes[value];
-					valueObj.categorie = 'value';
-					$('#trace').children('tbody').children('tr').eq(traceEndLine).append('<td>' + that.valueobjToString(valueObj) + '</td>');
-					that.varsLastValues[value] = that.varsValues[value];
-				}
-				else {
-					$('#trace').children('tbody').children('tr').eq(traceEndLine).append('<td></td>');
-				}
-				traceEndLine ++;
-			});
-			$('#trace').children('tbody').children('tr').eq(traceEndLine).append('<td></td>');
-			$('#trace').children('tbody').children('tr').eq(traceEndLine+1).append('<td></td>');
-			return traceEndLine;
-		};
-
 
 		//execute until the end
 		this.start = function()
 		{
-			//TODO ui
 			//Buttons style
-			$('.btn-start').addClass('btn-pause');
-			$('.btn-start').html('<span class="glyphicon glyphicon-pause"></span> Pause');
-			$('.btn-start').removeClass('btn-start');
-			$('.btn-next').attr('disabled','disabled');
+			this.ui.showPauseBtn();
+			this.ui.disableBtn('next');
+
 			//Start interpreter
 			if(this.speedMode)
 			{
@@ -1845,18 +1866,17 @@ $(function () {
 
 		this.pause = function()
 		{
-			//TODO ui
-			$('.btn-pause').addClass('btn-start');
-			$('.btn-pause').html('<span class="glyphicon glyphicon-play"></span> Lancer');
-			$('.btn-pause').removeClass('btn-pause');
-			$('.btn-next').removeAttr('disabled');
+			this.ui.showPauseBtn(false);
+			this.ui.disableBtn('next', false);
+
 			this.loopMode = false;
 		};
 
 
 		this.reset = function()
 		{
-			this.editor.toTextArea();
+			this.ui.reinit();
+
 			this.init();
 		};
 
@@ -1998,28 +2018,14 @@ $(function () {
 			nf04.submit();
 		}
 	});
-/*
-//TODO ui
+
+
 	ui.editor.on('change', function()
 	{
-		nf04.tooltipMsgs = [];
-		nf04.updateTooltips();
-
-
-		//Resize to fit with the text
-		var docHeight = $('.CodeMirror-sizer').height();
-		if(docHeight !== 0)
-		{
-			if(docHeight <= 300) {
-				docHeight = 300;
-			}
-			else if(docHeight >= $(window).height() - 100) {
-				docHeight = $(window).height() - 100;
-			}
-			$('.CodeMirror').css('height', docHeight); 
-		}
+		ui.removeTooltips();
+		ui.resizeEditor();
 	});
-*/
+
 
 
 	//Open filename parameter in url
