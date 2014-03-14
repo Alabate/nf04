@@ -3,6 +3,8 @@
 	height:300px;
 }
 
+.container { width: auto; }
+
 .errorMark{
 	width:.8em;
 }
