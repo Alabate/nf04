@@ -2,9 +2,9 @@ Algorithme TD_1_3_1_Absolue
 Variables:
 	nbr : réel
 Instructions:
-	Écrire("Entrez un réel" !)
+	Ecrire("Entrez un réel" !)
 		Lire(clavier ! nbr)
 	Si nbr < 0 alors
     	nbr <- -nbr
     FinSi
-    Écrire(nbr !)
+    Ecrire(nbr !)
