@@ -822,6 +822,7 @@ $(function () {
 					matches = /^Algorithme\s+([^\s"']+)$/i.exec(instruction);
 					if(matches !== null){
 						this.mode++;
+						document.title = matches[1];
 						$('#sortie').append('<li class="list-group-item list-group-item-success"><u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;') + '</strong></li>');
 						this.scrollToLastLine();
 					}
