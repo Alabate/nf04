@@ -1,5 +1,5 @@
 'use strict';
-/* global $:false, CodeMirror:false */
+/* global $:false, CodeMirror:false, getPageParameters:false */
 
 var UI;
 $(function () {
@@ -10,7 +10,20 @@ $(function () {
 	 */
 	UI = function()
 	{
+		//Private
 		var editor;
+		var callback = { //Please use theses callback function after every important action, because it could crash the js if set with another thing than a function
+			'start' : function(){},
+			'pause' : function(){},
+			'next' : function(){},
+			'reset' : function(){},
+			'submit' : function(){},
+			'speedmode' : function(){}
+		};
+		var ui = this;
+
+		//Public
+		this.speedmode = false;
 
 		/**
 		 * Disable or enable buttons with the class that start with `btn-`.
@@ -28,6 +41,15 @@ $(function () {
 				$('a.btn-' + button).parent().removeClass('disabled');
 				$('button.btn-' + button).removeAttr('disabled');
 			}
+		};
+
+		/**
+		 * Read the last input of the output ("sortie")
+		 * @return {string} content of the input
+		 */
+		this.addInput = function()
+		{
+			return $('#sortie').find('input').last().value;
 		};
 
 		/**
@@ -89,6 +111,32 @@ $(function () {
 				style = 'list-group-item-' + style;
 			}
 			$('#sortie').append('<li class="list-group-item ' + style + '">' + content + '</li>');
+		};
+
+		/**
+		 * Add a text field + a submit button to the output list
+		 */
+		this.addFieldToOutput = function()
+		{
+			this.addToOutput('<div class="input-group"><input type="text" class="form-control input-submit"/> '
+								+ '<span class="input-group-btn"><button class="btn btn-default btn-submit" type="button">Envoyer !</button></span></div>');
+		};
+
+		/**
+		 * Disable all text fields of the output list
+		 */
+		this.disableOutputFields = function()
+		{
+			$('#sortie').find('input').attr('disabled','disabled');
+		};
+
+		/**
+		 * Read the last input of the output ("sortie")
+		 * @return {string} content of the input
+		 */
+		this.readOutputField = function()
+		{
+			return $('#sortie').find('input').last()[0].value;
 		};
 
 		/**
@@ -280,6 +328,15 @@ $(function () {
 			}
 		};
 
+		/**
+		 * Set callback on button press
+		 * @param {string} button - the destination button (start|pause|next|reset|submit|speedmode)
+		 * @param {function} callback - The callback function
+		 */
+		this.onButtonClick = function(button, callbackFunc)
+		{
+			callback[button] = callbackFunc;
+		};
 
 		/**
 		 * Reset user interface
@@ -309,7 +366,7 @@ $(function () {
 		{
 			//init open button that need recent browser 
 			if (window.File && window.FileReader) {
-				this.disableBtn('open');
+				this.disableBtn('open',false);
 			}
 			else {
 				$('.btn-open').tooltip({
@@ -329,13 +386,148 @@ $(function () {
 				gutters: ['CodeMirror-linenumbers', 'markerColumn-danger', 'markerColumn-current']
 			});
 			this.reinit();
+
+			//Open file if required in url ?filename=
+			var params = getPageParameters();
+			if(params !== undefined && params.filename !== undefined && params.filename.indexOf('/') == -1)
+			{
+				$.ajax({
+					url:         './algos/' + params.filename + '.nf04',
+					type:        'GET',
+					dataType:    'text',
+					cache:       false,
+					success:     function(data){ui.setContent(data);}
+				});
+			}
 		};
 		this.init();
 		
-		//events
+	// ========== Events ============
 		editor.on('change', function()
 		{
-			this.resizeEditor();
+			ui.resizeEditor();
+		});
+
+		//control buttons
+		$('.algo-control').on('click','.btn-start', function(){
+			callback.start();
+		});
+		$('.algo-control').on('click','.btn-pause', function(){
+			callback.pause();
+		});
+		$('.algo-control').on('click','.btn-next', function(){
+			callback.next();
+		});
+		$('.algo-control').on('click','.btn-reset', function(){
+			callback.reset();
+		});
+
+		$('#sortie').on('click','.btn-submit', function(){
+			callback.submit();
+		});
+
+		$('#sortie').on('keypress','.input-submit', function(event){
+			//On presse enter
+			if(event.which == 13) {
+				callback.submit();
+			}
+		});
+
+
+		//Speedmode chechbox
+		$('.control-bar').on('click','.btn-speedmode', function(){
+			if(ui.speedmode)
+			{
+				//Disable speedmode : uncheck and close dropdown
+				ui.speedmode = false;
+				$('.btn-speedmode').children('span').addClass('glyphicon-unchecked');
+				$('.btn-speedmode').children('span').removeClass('glyphicon-check');
+				$('.btn-speedmode').parent().parent().parent().children('.dropdown-toggle').dropdown('toggle');
+				callback.speedmode(false);
+				//don't open modal
+				return false;
+			}
+
+			//open modal
+			return true;
+		});
+
+		//On enable speedmode
+		$('#speedmodeModal').on('click','.btn-submit-speedmode', function(){
+			ui.speedmode = true;
+			//Hide modal and check the box
+			$('#speedmodeModal').modal('hide');
+			$('.btn-speedmode').children('span').addClass('glyphicon-check');
+			$('.btn-speedmode').children('span').removeClass('glyphicon-unchecked');
+			//Fire callback
+			callback.speedmode(true);
+		});
+
+
+		//Don't open the "open file modal" if the button is disabled
+		$('.control-bar').on('click','.btn-open', function(){
+			if($(this).parent().hasClass('disabled')) {
+				return false;
+			}
+			return true;
+		});
+
+		//If submit a file in the open modal
+		$('#openModal').on('click','.btn-submit-open', function(){
+
+			//Check if there is a file
+			if($('#openModal').find('#openFile')[0].files.length === 0)
+			{
+				$('#openModal').find('.btn-submit-open').tooltip('destroy');
+				$('#openModal').find('.btn-submit-open').tooltip({
+					'html':true,
+					'title':'Vous devez sélectionner un fichier',
+					'container': '#openModal',
+					'trigger': 'manual'
+				});
+				$('#openModal').find('.btn-submit-open').tooltip('show');
+				return false;
+			}
+
+			//Check file size
+			if($('#openModal').find('#openFile')[0].files[0].size >= 100000)
+			{
+				$('#openModal').find('.btn-submit-open').tooltip('destroy');
+				$('#openModal').find('.btn-submit-open').tooltip({
+					'html':true,
+					'title':'Votre fichier est trop gros',
+					'container': '#openModal',
+					'trigger': 'manual'
+				});
+				$('#openModal').find('.btn-submit-open').tooltip('show');
+				return false;
+			}
+
+			//Load file
+			var reader = new FileReader();
+			reader.onload = function(theFile)
+			{
+				ui.setContent(theFile.target.result);
+				$('#openModal').modal('hide');
+				callback.reset();
+			};
+			reader.readAsText($('#openModal').find('#openFile')[0].files[0], 'UTF-8');
+		});
+
+		//Submit a bug
+		$('#bugModal').on('click','.btn-submit-bug', function(){
+			window.open('https://github.com/ALabate/nf04/issues/new?body=Un%20probl%C3%A8me%20a%20%C3%A9t%C3%A9%20trouv%C3%A9.%0A%3C!--%20Merci%20de%20pr%C3%A9ciser%20!%20--%3E%0A%0ACode%20source%20ayant%20cr%C3%A9%C3%A9%20le%20bug%20:%0A%60%60%60%0A'
+				+ encodeURIComponent(ui.getContent()) + '%0A%60%60%60%0A');
+		});
+
+		//Save
+		$('.control-bar').on('click','.btn-save', function(){
+			var link = document.createElement('a');
+		    link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(ui.getContent()));
+		    link.setAttribute('download', 'algo.nf04');
+		    document.body.appendChild(link);
+		    link.click();
+		    link.remove();
 		});
 	};
 });

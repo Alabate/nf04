@@ -101,4 +101,5 @@ function getPageParameters() {
 		param = paramList[i].split('=');
 		out[param[0]] = param[1];
 	}
+	return out;
 }

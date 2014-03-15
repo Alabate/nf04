@@ -11,30 +11,7 @@ $(function () {
 	 */
 	NF04 = function(ui)
 	{
-		this.speedMode = false;
-		this.ui = ui;
-		this.init = function()
-		{
-			//init vars
-
-			this.mode = 0;
-			this.varsTypes = [];
-			this.varsNames = [];
-			this.varsValues = [];
-			this.varsLastValues = [];
-			this.line = 0;
-			this.instructionsCount = 0;
-			this.traceScreenLine = -1;
-			this.inputSubmited = false;
-			this.inputCreated = false;
-			this.inputValue = '';
-			this.loopMode = false;
-			this.controlFlow = [];
-
-		};
-		// and init !
-		this.init();
-
+		var nf04 = this;
 
 		/**
 		 * Tell to the user that there is an execution error and put the interpreter in error mode (this.line = -1)
@@ -50,20 +27,20 @@ $(function () {
 
 			//Add style
 			if(line != -1) {
-				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'danger');
-				this.ui.addMarker(line, 'danger');
+				ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'danger');
+				ui.addMarker(line, 'danger');
 			}
 			else {
-				this.ui.addToOutput(message, 'danger');
+				ui.addToOutput(message, 'danger');
 			}
-			this.ui.focusOnOutput();
+			ui.focusOnOutput();
 
 			//Disable all buttons and editor
-			this.ui.disableBtn('start');
-			this.ui.disableBtn('pause');
-			this.ui.disableBtn('next');
-			this.ui.disableBtn('submit');
-			this.ui.disableEditor(false);
+			ui.disableBtn('start');
+			ui.disableBtn('pause');
+			ui.disableBtn('next');
+			ui.disableBtn('submit');
+			ui.disableEditor(false);
 
 			//Stop interpreter
 			this.line = -1;
@@ -84,13 +61,13 @@ $(function () {
 
 			//Add style
 			if(line != -1) {
-				this.ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'warning');
-				this.ui.addMarker(line, 'warning');
+				ui.addToOutput('<u>Ligne ' + (line+1) + '</u> : ' + message, 'warning');
+				ui.addMarker(line, 'warning');
 			}
 			else {
-				this.ui.addToOutput(message, 'warning');
+				ui.addToOutput(message, 'warning');
 			}
-			this.ui.focusOnOutput();
+			ui.focusOnOutput();
 		};
 
 
@@ -103,7 +80,7 @@ $(function () {
 		{
 			line = (line !== undefined)? line : this.line;
 
-			this.ui.traceAddNewColumn(line);
+			ui.traceAddNewColumn(line);
 			var that = this;
 			$.each(this.varsNames, function(index, value){
 				if( that.varsLastValues[value] != that.varsValues[value] )
@@ -113,11 +90,39 @@ $(function () {
 						'type' : that.varsTypes[value],
 						'categorie' : 'value'
 					};
-					that.ui.traceSetVar(index, that.valueobjToString(valueObj));
+					ui.traceSetVar(index, that.valueobjToString(valueObj));
 					that.varsLastValues[value] = that.varsValues[value];
 				}
 			});
 		};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		this.executeExpression = function(expressionString, quotes)
 		{
@@ -738,9 +743,9 @@ $(function () {
 		//Execute the next instruction
 		this.nextLine = function()
 		{
-			this.ui.disableEditor();
+			ui.disableEditor();
 			//Get the line value and remove white spaces from start and end of the string
-			var instruction = this.ui.getLine(this.line);
+			var instruction = ui.getLine(this.line);
 			var that = this;
 			//if the algorithme reach the end
 			if(this.line == -1){
@@ -748,17 +753,17 @@ $(function () {
 			}
 			if(instruction === undefined)
 			{
-				this.ui.addToOutput('<u>Ligne ' + (this.line+1) + '</u> : L\'algorithme s\'est terminé correctement en <strong>' + this.instructionsCount + '</strong> instructions.', 'success');
-				this.ui.focusOnOutput();
+				ui.addToOutput('<u>Ligne ' + (this.line+1) + '</u> : L\'algorithme s\'est terminé correctement en <strong>' + this.instructionsCount + '</strong> instructions.', 'success');
+				ui.focusOnOutput();
 				this.line = -1;
 
-				this.ui.removeMarker('current');
-				this.ui.disableEditor(false);
+				ui.removeMarker('current');
+				ui.disableEditor(false);
 
-				this.ui.disableBtn('start');
-				this.ui.disableBtn('pause');
-				this.ui.disableBtn('next');
-				this.ui.disableBtn('submit');
+				ui.disableBtn('start');
+				ui.disableBtn('pause');
+				ui.disableBtn('next');
+				ui.disableBtn('submit');
 
 				//Reach the end without find all end of control flow instructions
 				if(this.controlFlow.length > 0 && this.controlFlow[this.controlFlow.length-1] !== undefined)
@@ -790,8 +795,8 @@ $(function () {
 					if(matches !== null){
 						this.mode++;
 						document.title = matches[1];
-						this.ui.addToOutput('<u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;') + '</strong>', 'success');
-						this.ui.focusOnOutput();
+						ui.addToOutput('<u>Ligne ' + (this.line+1) + '</u> : Début de l\'algorithme <strong>' + matches[1].replace(/&/g, '&amp;').replace(/>/g, '&gt;').replace(/</g, '&lt;') + '</strong>', 'success');
+						ui.focusOnOutput();
 					}
 					else
 					{
@@ -894,7 +899,7 @@ $(function () {
 								}
 
 								//add to the trace table
-								this.ui.traceAddNewVar(vars[j]);
+								ui.traceAddNewVar(vars[j]);
 							}
 						}
 					}
@@ -947,8 +952,8 @@ $(function () {
 						for (i = 0; i < params.length; i++) {
 							screenOutput += this.valueobjToString(this.executeExpression(params[i]),false);
 						}
-						this.ui.addToOutput(screenOutput);
-						this.ui.focusOnOutput();
+						ui.addToOutput(screenOutput);
+						ui.focusOnOutput();
 					}
 					else if((matches = instruction.match(/^lire\s*\(\s*(.+)\s*!\s*([a-z0-9_]+)\s*\)$/i)) !== null) // Lire(<source> ! <sortie>)
 					{
@@ -968,10 +973,8 @@ $(function () {
 						}
 						if(this.inputValue === '' && !this.inputCreated)
 						{
-							//TODO ui
-							this.ui.addToOutput('<div class="input-group"><input type="text" class="form-control input-l'+this.instructionsCount+' input-submit"/> '
-								+ '<span class="input-group-btn"><button class="btn btn-default btn-submit" type="button">Envoyer !</button></span></div>');
-							this.ui.focusOnOutput();
+							ui.addFieldToOutput();
+							ui.focusOnOutput();
 
 							this.inputCreated = true;
 							return false;
@@ -1045,9 +1048,9 @@ $(function () {
 						//if we are here, we jump to "FinSi" the "true block" of the whole "Si" is the block just before. So this one is "false".
 						found = false;
 						var SiLine = this.controlFlow[this.controlFlow.length-1].line;
-						for (i = this.line+1; i < this.ui.getLineCount(); i++)
+						for (i = this.line+1; i < ui.getLineCount(); i++)
 						{
-							lineContent = this.ui.getLine(i).trim();
+							lineContent = ui.getLine(i).trim();
 
 							if((matches = lineContent.match(/^Si\s+(.+)\s+Alors$/i)) !== null)
 							{
@@ -1108,9 +1111,9 @@ $(function () {
 						if(!condition.value)
 						{
 							found = false;
-							for (i = this.line+1; i < this.ui.getLineCount(); i++)
+							for (i = this.line+1; i < ui.getLineCount(); i++)
 							{
-								lineContent = this.ui.getLine(i).trim();
+								lineContent = ui.getLine(i).trim();
 
 								//Searching for sub "Si" or "FinSi"
 								if((matches = lineContent.match(/^Si\s+(.+)\s+Alors$/i)) !== null)
@@ -1269,9 +1272,9 @@ $(function () {
 						if((forStep.value > 0 && forBegin.value > forEnd.value) || (forStep.value < 0 && forBegin.value < forEnd.value))
 						{
 							found = false;
-							for (i = this.line+1; i < this.ui.getLineCount(); i++)
+							for (i = this.line+1; i < ui.getLineCount(); i++)
 							{
-								lineContent = this.ui.getLine(i).trim();
+								lineContent = ui.getLine(i).trim();
 								if(lineContent.toLowerCase() == 'finpour')
 								{
 									this.traceSetNewColumn();
@@ -1349,9 +1352,9 @@ $(function () {
 						if(!condition.value)
 						{
 							found = false;
-							for (i = this.line+1; i < this.ui.getLineCount(); i++)
+							for (i = this.line+1; i < ui.getLineCount(); i++)
 							{
-								lineContent = this.ui.getLine(i).trim();
+								lineContent = ui.getLine(i).trim();
 								if(lineContent.toLowerCase() == 'fintq')
 								{
 									this.traceSetNewColumn();
@@ -1419,14 +1422,14 @@ $(function () {
 						if(screenOutput.length >= 10) {
 							screenOutput = screenOutput.substr(0,10) + '..';
 						}
-						this.ui.traceSetVar(-2, screenOutput);
+						ui.traceSetVar(-2, screenOutput);
 						screenOutput = '';
 
 						//keyboard input
 						if(keyboardInput.length >= 10) {
 							keyboardInput = keyboardInput.substr(0,10) + '..';
 						}
-						this.ui.traceSetVar(-1, keyboardInput);
+						ui.traceSetVar(-1, keyboardInput);
 						keyboardInput = '';
 					}
 					this.instructionsCount ++;
@@ -1442,9 +1445,9 @@ $(function () {
 
 
 			//Set the actual line
-			this.ui.removeMarker('current');
-			this.ui.addMarker(this.line,'current');
-			this.ui.scrollEditorCurrent();
+			ui.removeMarker('current');
+			ui.addMarker(this.line,'current');
+			ui.scrollEditorCurrent();
 			
 			//to the next instrction
 			if(this.loopMode){
@@ -1456,27 +1459,79 @@ $(function () {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		/**
+		 * Reset interpreter
+		 */
+		this.reinit = function()
+		{
+			ui.reinit();
+
+			//init vars
+			this.loopMode = false; // true: the user want execute each instruction until the end | false: One instruction and then stop
+
+
+			this.mode = 0;
+			this.varsTypes = [];
+			this.varsNames = [];
+			this.varsValues = [];
+			this.varsLastValues = [];
+			this.line = 0;
+			this.instructionsCount = 0;
+			this.traceScreenLine = -1;
+			this.inputSubmited = false;
+			this.inputCreated = false;
+			this.inputValue = '';
+			this.controlFlow = [];
+		};
+
+	// ========== Buttons functions used in callbacks ============
+	// Please don't use this inside, but nf04
+
+		/**
+		 * Function called when the user want to execute one instruction
+		 */
 		this.next = function()
 		{
-			this.loopMode = false;
-			this.nextLine();
+			nf04.loopMode = false;
+			nf04.nextLine();
 		};
 
 
-		//execute until the end
+		/**
+		 * Function called when the user want to execute until the end
+		 */
 		this.start = function()
 		{
 			//Buttons style
-			this.ui.showPauseBtn();
-			this.ui.disableBtn('next');
+			ui.showPauseBtn();
+			ui.disableBtn('next');
 
 			//Start interpreter
-			if(this.speedMode)
+			if(ui.speedmode)
 			{
-				this.loopMode = false;
+				nf04.loopMode = false;
 				while(true)
 				{
-					if(!this.nextLine())
+					if(!nf04.nextLine())
 					{
 						break;
 					}
@@ -1484,40 +1539,76 @@ $(function () {
 			}
 			else
 			{
-				this.loopMode = true;
-				this.nextLine();
-			}
-		};
-
-		this.submit = function()
-		{
-			//TODO ui
-			if(this.inputCreated && !this.inputSubmited)
-			{
-				$('#sortie').find('.input-l' + this.instructionsCount).attr('disabled','disabled');
-				$('#sortie').find('.input-l' + this.instructionsCount).parent().find('button').attr('disabled','disabled');
-				this.inputValue = $('#sortie').find('.input-l' + this.instructionsCount)[0].value;
-				this.inputCreated = true;
-				this.inputSubmited = true;
-				this.start();
+				nf04.loopMode = true;
+				nf04.nextLine();
 			}
 		};
 
 
+		/**
+		 * Function called when the user want to pause the execution after this.start()
+		 */
 		this.pause = function()
 		{
-			this.ui.showPauseBtn(false);
-			this.ui.disableBtn('next', false);
+			ui.showPauseBtn(false);
+			ui.disableBtn('next', false);
 
-			this.loopMode = false;
+			nf04.loopMode = false;
 		};
 
 
+		/**
+		 * Function called when the user want to reset everything in the interpreter
+		 */
 		this.reset = function()
 		{
-			this.ui.reinit();
+			nf04.reinit();
 
-			this.init();
+			//this.init();
 		};
+
+		/**
+		 * Function called when the user change the speedmode
+		 * @param {bool} enabled - True if the user did just enable the speedmode or false if he disabled it
+		 */
+		this.speedmode = function(enabled)
+		{
+			nf04.reset();
+		};
+
+		/**
+		 * Function called after an user prompt when he valide his answere
+		 */
+		this.submit = function()
+		{
+			if(nf04.inputCreated && !nf04.inputSubmited)
+			{
+				ui.disableOutputFields();
+				ui.disableBtn('submit');
+				nf04.inputValue = ui.readOutputField();
+				nf04.inputCreated = true;
+				nf04.inputSubmited = true;
+
+				if(nf04.loopMode) {
+					nf04.start();
+				}
+				else {
+					nf04.next();
+				}
+			}
+		};
+
+	// ========== Init ============
+		//Set ui callbacks
+		ui.onButtonClick('start', this.start);
+		ui.onButtonClick('pause', this.pause);
+		ui.onButtonClick('next', this.next);
+		ui.onButtonClick('reset', this.reset);
+		ui.onButtonClick('submit', this.submit);
+		ui.onButtonClick('speedmode', this.speedmode);
+
+		this.reinit();
+
+
 	};
 });
