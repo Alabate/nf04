@@ -8,7 +8,7 @@
 
 
 
-.markerColumn-error{
+.markerColumn-danger{
 	width: 0.8em;
 }
 .markerColumn-current{
@@ -16,17 +16,17 @@
 	margin-left: -3px;
 }
 
-.marker-error{
-	color:#FFA500;
+.marker-danger{
+	color:#f00;
 }
 .marker-warning{
-	color:#f00;
+	color:#FFA500;
 }
 .marker-current{
 	color:#6FAEDF;
 }
 
-.bg-error{
+.bg-danger{
 	background-color:#751a19;
 }
 .bg-warning{
