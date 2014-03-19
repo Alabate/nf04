@@ -4,6 +4,24 @@
 var NF04;
 $(function () {
 
+
+
+
+	/**
+	 * Class that hold a value and his type
+	 * @param {string} categorie - Will be "value" if it's a value (like an int) or "function" if it's function, else it will be the same as the value
+	 * @param {string} type - Will be the type of the var (entier, réel,..) if it's a variable, else it will be the same as the value
+	 * @param {string} [value=null] - The value of the var or the string representative of the element, like "(" for a left parenthese or the function name for a function
+	 * @constructor
+	 */
+	var Value = function(categorie, type, value)
+	{
+		value = (typeof value !== 'undefined' )? value : null;
+		this.categorie = categorie;
+		this.type = type;
+		this.value = value;
+	};
+
 	/**
 	 * Class that interpret the code
 	 * @param {UI} ui - instance of the ui class
@@ -83,15 +101,10 @@ $(function () {
 			ui.traceAddNewColumn(line);
 			var that = this;
 			$.each(this.varsNames, function(index, value){
-				if( that.varsLastValues[value] != that.varsValues[value] )
+				if( that.precedentVars[value].value != that.vars[value].value )
 				{
-					var valueObj = {
-						'value' : that.varsValues[value],
-						'type' : that.varsTypes[value],
-						'categorie' : 'value'
-					};
-					ui.traceSetVar(index, that.valueobjToString(valueObj));
-					that.varsLastValues[value] = that.varsValues[value];
+					ui.traceSetVar(index, that.valueToString(that.vars[value]));
+					that.precedentVars[value] = that.vars[value];
 				}
 			});
 		};
@@ -373,29 +386,36 @@ $(function () {
 			}
 			else if((matches = value.match(/^([a-z0-9_]+)$/i)) !== null) //Variable
 			{
-				//Get type
-				if(this.varsTypes[matches[1]] === undefined)
+				//Check if it's an enumeration
+				var infos = this.enums.getByValue(matches[1]);
+				if(infos !== undefined) 
 				{
-					this.addError('La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
-					return false;
+					out.value = infos.id;
+					out.type = infos.enumeration;
+					out.categorie = 'value';
 				}
-				out.categorie = 'value';
-				out.type = this.varsTypes[matches[1]];
-				
-				//Get value
-				if(this.varsValues[matches[1]] === undefined)
+				else
 				{
-					this.addWarning('La variable <strong>' + matches[1] + '</strong> n\'a pas de valeur');
-					//Set default value
-					if(this.varsTypes[matches[1]] == 'booléen'){
-						out.value = 'Faux';
+					out = this.vars[matches[1]];
+					//Get type
+					if(out === undefined)
+					{
+						this.addError('La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
+						return false;
 					}
-					else {
-						out.value = 0;
+					
+					//Get value
+					if(out.value === null)
+					{
+						this.addWarning('La variable <strong>' + matches[1] + '</strong> n\'a pas de valeur');
+						//Set default value
+						if(this.vars[matches[1]].type == 'booléen'){
+							out.value = 'Faux';
+						}
+						else {
+							out.value = 0;
+						}
 					}
-				}
-				else {
-					out.value = this.varsValues[matches[1]];
 				}
 			}
 			else
@@ -465,12 +485,12 @@ $(function () {
 				//Check operator/value alternation
 				if(input[i].categorie == 'value' && lastType == 'value')
 				{
-					this.addError('J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux valeurs qui se suivent <strong>' + this.valueobjToString(input[i]) + '</strong> et <strong>' + this.valueobjToString(input[lastTypeI]) + '</strong> alors que toutes les valeurs doivent être séparés par un opérateur.');
+					this.addError('J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux valeurs qui se suivent <strong>' + this.valueToString(input[i]) + '</strong> et <strong>' + this.valueToString(input[lastTypeI]) + '</strong> alors que toutes les valeurs doivent être séparés par un opérateur.');
 					return false;
 				}
 				if(input[i].categorie == 'operator' && lastType == 'operator')
 				{
-					this.addError('J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux opérateurs qui se suivent <strong>' + this.valueobjToString(input[i]) + '</strong> et <strong>' + this.valueobjToString(input[lastTypeI]) + '</strong> alors que tous les opérateur doivent être séparés par une valeur.');
+					this.addError('J\'essaye de calculer cette expression : <strong>' + this.expressionString(input) + '</strong> mais j\'ai trouvé deux opérateurs qui se suivent <strong>' + this.valueToString(input[i]) + '</strong> et <strong>' + this.valueToString(input[lastTypeI]) + '</strong> alors que tous les opérateur doivent être séparés par une valeur.');
 					return false;
 				}
 				if(input[i].categorie == 'value' || input[i].categorie == 'operator')
@@ -525,7 +545,7 @@ $(function () {
 				if($.inArray(valueObj1.type, ['réel','entier']) == -1 || $.inArray(valueObj2.type, ['réel','entier'])  == -1)
 				{
 					this.addError('L\'opperation suivante a été faite : <br/><strong>'
-							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+							+ this.valueToString(valueObj1) + ' ' + operator + ' ' + this.valueToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur ne supporte que les <strong>réels</strong> ou les <strong>entiers</strong>');
 					return false;
@@ -543,7 +563,7 @@ $(function () {
 				if(valueObj1.type != 'entier' || valueObj2.type != 'entier')
 				{
 					this.addError('L\'opperation suivante a été faite : <br/><strong>'
-							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+							+ this.valueToString(valueObj1) + ' ' + operator + ' ' + this.valueToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur ne supporte que les <strong>entiers</strong>');
 					return false;
@@ -557,7 +577,7 @@ $(function () {
 				if(valueObj1.type != valueObj2.type && ($.inArray(valueObj1.type, ['réel','entier']) == -1 || $.inArray(valueObj2.type, ['réel','entier'])  == -1))
 				{
 					this.addError('L\'opperation suivante a été faite : <br/><strong>'
-							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+							+ this.valueToString(valueObj1) + ' ' + operator + ' ' + this.valueToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur ne comparer que des éléments du même type (exception faite pour les réels et les entiers qui peuvent être comparés)');
 					return false;
@@ -570,7 +590,7 @@ $(function () {
 				if($.inArray(valueObj1.type, ['booléen']) == -1 || $.inArray(valueObj2.type, ['booléen'])  == -1)
 				{
 					this.addError('L\'opperation suivante a été faite : <br/><strong>'
-							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+							+ this.valueToString(valueObj1) + ' ' + operator + ' ' + this.valueToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur ne supporte que les <strong>booléen</strong>');
 					return false;
@@ -581,7 +601,7 @@ $(function () {
 			else
 			{
 				this.addError('L\'opperation suivante a été faite : <br/><strong>'
-						+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+						+ this.valueToString(valueObj1) + ' ' + operator + ' ' + this.valueToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 						+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 						+ 'Or cet opérateur n\'existe pas.');
 				return false;
@@ -639,7 +659,7 @@ $(function () {
 					break;
 				default:
 					this.addError('L\'opperation suivante a été faite : <br/><strong>'
-							+ this.valueobjToString(valueObj1) + ' ' + operator + ' ' + this.valueobjToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
+							+ this.valueToString(valueObj1) + ' ' + operator + ' ' + this.valueToString(valueObj2) + '</strong> ayant pour types <strong>&lt;'
 							+ valueObj1.type + '&gt; ' + operator + ' &lt;' + valueObj2.type + '&gt;</strong><br/>'
 							+ 'Or cet opérateur n\'existe pas.');
 					return false;
@@ -651,12 +671,12 @@ $(function () {
 		{
 			var output = '';
 			for (var i = 0; i < expressionObject.length; i++) {
-				output += this.valueobjToString(expressionObject[i]) + ' ';
+				output += this.valueToString(expressionObject[i]) + ' ';
 			}
 			return output;
 		};
 
-		this.valueobjToString = function (valueObj, quotes)
+		this.valueToString = function (valueObj, quotes)
 		{
 			quotes = (typeof quotes !== 'undefined' )? quotes : true;
 			if(valueObj.categorie == 'value')
@@ -670,7 +690,7 @@ $(function () {
 						return valueObj.value;
 					}
 				}
-				if(valueObj.type == 'string')
+				else if(valueObj.type == 'string')
 				{
 					if(quotes) {
 						return '"' + valueObj.value + '"';
@@ -679,8 +699,12 @@ $(function () {
 						return valueObj.value;
 					}
 				}
-				if(valueObj.type == 'booléen') {
+				else if(valueObj.type == 'booléen') {
 					return (valueObj.value)? 'Vrai' : 'Faux';
+				}
+				else if(this.enums.exist(valueObj.type))
+				{
+					return this.enums.getByID(valueObj.value).value;
 				}
 				else {
 					return valueObj.value;
@@ -837,7 +861,35 @@ $(function () {
 				//if Types this.mode
 				else if(this.mode == 2)
 				{
-					this.addWarning('Je ne sais pas encore comment interpréter les types.. donc je vais les ignorer !');
+					//Enumeration
+					if(/^([a-z0-9_]+)\s*:\s*[eé]num[eé]ration\s*\(([a-z0-9_\s,]+)\)\s*$/i.test(instruction))
+					{
+						var name = RegExp.$1.toLowerCase();
+						if(this.enums.exist(name)) {
+							this.addError('L\'énumération <strong>' + name + '</strong> existe déjà');
+							return false;
+						}
+
+						var list = RegExp.$2.trim().toLowerCase();
+						list = list.split(',');
+						for (var j = 0; j < list.length; j++)
+						{
+							list[j] = list[j].trim();
+							if(this.enums.getByValue(list[j]) !== undefined) {
+								this.addError('La valeur <strong>' + list[j] + '</strong> de cette énumération est déjà utilisé dans l\'énumération <strong>' + this.enums.getByValue(list[j]).enumeration + '</strong>');
+								return false;
+							}
+							this.enums.push({
+								'id' : j,
+								'value' : list[j],
+								'enumeration' : name
+							});
+						}
+					}
+					else {
+						this.addError('Je ne comprend pas cette ligne : <strong>' + instruction + '</strong>');
+						return false;
+					}
 				}
 
 				//if Variables this.mode
@@ -872,8 +924,11 @@ $(function () {
 								type = 'booléen';
 								break;
 							default:
-								this.addError('La type <strong>' + type + '</strong> n\'existe pas');
-								return;
+								//if not an enumeration
+								if(!this.enums.exist(type)) {
+									this.addError('La type <strong>' + type + '</strong> n\'existe pas');
+									return;
+								}
 						}
 
 						//Split vars
@@ -887,11 +942,26 @@ $(function () {
 							}
 							else
 							{
+
+								//Check if the var is not already an enumeration
+								if(this.enums.exist(vars[j])) {
+									this.addError('La valeur <strong>' + vars[j] + '</strong> est utilisé comme nom d\'une enumération');
+									return false;
+								}
+
+								//Check if the var is not already an enumeration value
+								if(this.enums.getByValue(vars[j]) !== undefined) {
+									this.addError('La valeur <strong>' + vars[j] + '</strong> est définie dans l\'énumération <strong>' + this.enums.getByValue(vars[j]).enumeration + '</strong>, vous ne pouvez donc pas l\'utiliser en tant que varriable');
+									return false;
+								}
+
+
 								//Check if var not already defined
-								if(this.varsTypes[vars[j]] === undefined)
+								if(this.vars[vars[j]] === undefined)
 								{
 									this.varsNames.push(vars[j]);
-									this.varsTypes[vars[j]] = type.toLowerCase();
+									this.vars[vars[j]] = new Value('value', type.toLowerCase());
+									this.precedentVars[vars[j]] = new Value('value', type.toLowerCase());
 								}
 								else{
 									this.addError('La variable <strong>' + vars[j] + '</strong> a déjà été définie');
@@ -921,12 +991,11 @@ $(function () {
 					if((matches = instruction.match(/^([a-z0-9_]+)\s*<-\s*(.+)$/i)) !== null) // <var> <- <expression>
 					{
 						//Get type
-						if(this.varsTypes[matches[1]] === undefined)
+						if(this.vars[matches[1]] === undefined)
 						{
 							this.addError('La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
 							return false;
 						}
-						type = this.varsTypes[matches[1]];
 
 						//execute expression
 						var valueObj = this.executeExpression(matches[2]);
@@ -935,14 +1004,16 @@ $(function () {
 						}
 
 						//Check type
-						if(valueObj.type != type && !(valueObj.type == 'entier' && type == 'réel'))
+						if(valueObj.type != this.vars[matches[1]].type
+						 	&& !(valueObj.type == 'entier' && this.vars[matches[1]].type == 'réel')
+						 	&& !(valueObj.type == 'entier' && this.enums.exist(this.vars[matches[1]].type)))
 						{
-							this.addError('Vous ne pouvez pas assigner une valeur de type <strong>&lt;' + valueObj.type + '&gt;</strong> à une variable de type <strong>&lt;' + type + '&gt;</strong>.');
+							this.addError('Vous ne pouvez pas assigner une valeur de type <strong>&lt;' + valueObj.type + '&gt;</strong> à une variable de type <strong>&lt;' + this.vars[matches[1]].type + '&gt;</strong>.');
 							return false;
 						}
 
 						//Set var
-						this.varsValues[matches[1]] = valueObj.value;
+						this.vars[matches[1]].value = valueObj.value;
 
 					}
 					else if((matches = instruction.match(/^[ée]crire\s*\(\s*(.+)\s*!\s*\)$/i)) !== null) // Ecrire(<expression>,<expression>, ... !)
@@ -950,7 +1021,7 @@ $(function () {
 						var params = matches[1].splitUnquotted(',');
 						screenOutput = '';
 						for (i = 0; i < params.length; i++) {
-							screenOutput += this.valueobjToString(this.executeExpression(params[i]),false);
+							screenOutput += this.valueToString(this.executeExpression(params[i]),false);
 						}
 						ui.addToOutput(screenOutput);
 						ui.focusOnOutput();
@@ -966,7 +1037,7 @@ $(function () {
 						}
 						//destination var
 						matches[2] = matches[2].trim();
-						if(this.varsTypes[matches[2]] === undefined)
+						if(this.vars[matches[2]] === undefined)
 						{
 							this.addError('La variable <strong>' + matches[2] + '</strong> n\'est pas définie');
 							return false;
@@ -990,15 +1061,15 @@ $(function () {
 							this.inputSubmited = false;
 							this.inputCreated = false;
 							//Set var
-							switch(this.varsTypes[matches[2]])
+							switch(this.vars[matches[2]].type)
 							{
 								case 'caractère':
-									this.varsValues[matches[2]] = this.inputValue[0];
+									this.vars[matches[2]].value = this.inputValue[0];
 									this.inputValue = this.inputValue.substr(1);
 									break;
 								case 'réel':
-									this.varsValues[matches[2]] = parseFloat(this.inputValue.replace(',','.'));
-									if(isNaN(this.varsValues[matches[2]]))
+									this.vars[matches[2]].value = parseFloat(this.inputValue.replace(',','.'));
+									if(isNaN(this.vars[matches[2]].value))
 									{
 										this.addError('La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un réel');
 										return false;
@@ -1006,8 +1077,8 @@ $(function () {
 									this.inputValue = '';
 									break;
 								case 'entier':
-									this.varsValues[matches[2]] = parseInt(this.inputValue,10);
-									if(isNaN(this.varsValues[matches[2]]))
+									this.vars[matches[2]].value = parseInt(this.inputValue,10);
+									if(isNaN(this.vars[matches[2]].value))
 									{
 										this.addError('La valeur donnée par l\'utilisateur <strong>' + this.inputValue + '</strong> n\'est pas un entier');
 										return false;
@@ -1015,11 +1086,11 @@ $(function () {
 									this.inputValue = '';
 									break;
 								case 'string':
-									this.varsValues[matches[2]] = this.inputValue;
+									this.vars[matches[2]].value = this.inputValue;
 									this.inputValue = '';
 									break;
 								case 'booléen':
-									this.varsValues[matches[2]] = (this.inputValue.toLowerCase() == 'vrai');
+									this.vars[matches[2]].value = (this.inputValue.toLowerCase() == 'vrai');
 									this.inputValue = '';
 									break;
 							}
@@ -1216,11 +1287,11 @@ $(function () {
 						var forStep;
 
 						//Check var
-						if(this.varsTypes[forVar] === undefined) {
+						if(this.vars[forVar] === undefined) {
 							this.addError('La variable <strong>' + matches[1] + '</strong> n\'est pas définie');
 							return false;
 						}
-						if(this.varsTypes[forVar] != 'entier') {
+						if(this.vars[forVar].type != 'entier') {
 							this.addError('La variable <strong>' + matches[1] + '</strong> devrait être de type <strong>entier</strong> pour être utilisé dans une boucle <strong>Pour</strong>');
 							return false;
 						}
@@ -1266,7 +1337,7 @@ $(function () {
 						}
 
 						//init var
-						this.varsValues[forVar] = forBegin.value;
+						this.vars[forVar].value = forBegin.value;
 
 						//Test condition, if false jump to "FinPour"
 						if((forStep.value > 0 && forBegin.value > forEnd.value) || (forStep.value < 0 && forBegin.value < forEnd.value))
@@ -1318,8 +1389,8 @@ $(function () {
 
 						//increment and test condition
 						var forData = this.controlFlow[this.controlFlow.length-1];
-						this.varsValues[forData.variable] += forData.step.value;
-						var value = this.varsValues[forData.variable];
+						this.vars[forData.variable].value += forData.step.value;
+						var value = this.vars[forData.variable].value;
 						
 						//Test condition, if false jump to "FinPour"
 						if((forData.step.value > 0 && value <= forData.end.value) || (forData.step.value < 0 && value >= forData.end.value))
@@ -1487,13 +1558,42 @@ $(function () {
 
 			//init vars
 			this.loopMode = false; // true: the user want execute each instruction until the end | false: One instruction and then stop
+			this.vars = [];
+			this.varsNames = [];
+			this.precedentVars = [];
+			this.enumsNames = [];
 
+
+			this.enums = [];
+			this.enums.getByValue = function(value) {
+				for (var i = 0; i < this.length; i++) {
+					if(this[i].value ==  value) {
+						return this[i];
+					}
+				}
+				return undefined;					
+			};
+			this.enums.getByID = function(id) {
+				for (var i = 0; i < this.length; i++) {
+					if(this[i].id ==  id) {
+						return this[i];
+					}
+				}
+				return undefined;					
+			};
+			this.enums.exist = function(enumeration) {
+				for (var i = 0; i < this.length; i++) {
+					if(this[i].enumeration == enumeration) {
+						return true;
+					}
+				}
+				return false;
+			};
+			/// this.enumeration
+			/// this.value (text value)
+			/// this.id
 
 			this.mode = 0;
-			this.varsTypes = [];
-			this.varsNames = [];
-			this.varsValues = [];
-			this.varsLastValues = [];
 			this.line = 0;
 			this.instructionsCount = 0;
 			this.traceScreenLine = -1;
