@@ -748,9 +748,9 @@ $(function () {
 					return value;
 				case 'abs':
 					value = this.evaluateExpression(input);
-					if(value.type != 'entier')
+					if(value.type != 'entier' && value.type != 'réel')
 					{
-						this.addError(this.line, 'Vous ne pouvez pas utiliser la fonction <strong>entier()</strong> sur une valeur de type <strong>' + value.type + '</strong>. Cette fonction n\'accepte que des <strong>entiers</strong>');
+						this.addError(this.line, 'Vous ne pouvez pas utiliser la fonction <strong>abs()</strong> sur une valeur de type <strong>' + value.type + '</strong>. Cette fonction n\'accepte que des <strong>entiers</strong>');
 						return false;
 					}
 					value.value = Math.abs(value.value);
